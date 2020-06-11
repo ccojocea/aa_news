@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "872650749528",
+    "firebase_url": "https://aanews-7fbef.firebaseio.com",
+    "project_id": "aanews-7fbef",
+    "storage_bucket": "aanews-7fbef.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:872650749528:android:9d587f4643bc43603cfc2d",
+        "android_client_info": {
+          "package_name": "com.ccojocea.aanews"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "872650749528-d9f3c7hqbnkc3b6qkopmc75otm05v1co.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBiuBiffryE8iAJEa4MJeG1JfBAsdmmJ24"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "872650749528-d9f3c7hqbnkc3b6qkopmc75otm05v1co.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
