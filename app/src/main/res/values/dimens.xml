@@ -4,4 +4,6 @@
     <dimen name="default_fragment_padding">12dp</dimen>
     <dimen name="card_view_padding">12dp</dimen>
     <dimen name="large_item_image_content_padding">6dp</dimen>
+    <dimen name="settings_icon_size">32dp</dimen>
+    <dimen name="overview_settings_icon_size">24dp</dimen>
 </resources>

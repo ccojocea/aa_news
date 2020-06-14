@@ -11,13 +11,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.BaseFragment;
 import com.ccojocea.aanews.common.VerticalItemDecoration;
 import com.ccojocea.aanews.databinding.FragmentHeadlinesBinding;
 
-public class HeadlinesFragment extends BaseFragment {
+public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener {
 
     private FragmentHeadlinesBinding binding;
     private HeadlinesViewModel viewModel;
@@ -51,6 +52,7 @@ public class HeadlinesFragment extends BaseFragment {
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerView.addItemDecoration(new VerticalItemDecoration());
         binding.recyclerView.setAdapter(adapter);
+        binding.refreshLayout.setOnRefreshListener(this);
     }
 
     @Override
@@ -67,12 +69,14 @@ public class HeadlinesFragment extends BaseFragment {
     public void setupLiveData() {
         viewModel.getTopHeadlinesLiveData().observe(getViewLifecycleOwner(), articleEntities -> {
             if (getContext() != null) {
+                binding.refreshLayout.setRefreshing(false);
                 adapter.setItems(articleEntities);
             }
         });
 
         viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), isError -> {
             if (isError != null && isError) {
+                binding.refreshLayout.setRefreshing(false);
                 viewModel.resetError();
                 //TODO
                 if (getContext() != null) {
@@ -80,6 +84,11 @@ public class HeadlinesFragment extends BaseFragment {
                 }
             }
         });
+    }
+
+    @Override
+    public void onRefresh() {
+        viewModel.getTopHeadlines();
     }
 
 }

@@ -40,7 +40,7 @@ public class HeadlinesViewModel extends ViewModel {
         return errorLiveData;
     }
 
-    private void getTopHeadlines() {
+    public void getTopHeadlines() {
         compositeDisposable.add(
                 NewsRepository.getInstance()
                         .getTopHeadlines()

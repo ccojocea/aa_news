@@ -117,8 +117,7 @@ public class MainActivity extends BaseActivity {
             public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 if (adapter != null) {
-                    binding.collapsingToolbar.setTitle(adapter.getPageTitle(MainActivity.this, position));
-//                    setTitle(adapter.getPageTitle(MainActivity.this, position));
+                    setTitle(adapter.getPageTitle(MainActivity.this, position));
                 }
             }
         });

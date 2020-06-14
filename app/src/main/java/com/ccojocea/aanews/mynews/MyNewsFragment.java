@@ -39,7 +39,7 @@ public class MyNewsFragment extends BaseFragment {
 
         //TODO setup livedata updates
         viewModel.getArticlesLiveData().observe(getViewLifecycleOwner(), articleEntities -> {
-            binding.textView.setText("Articles received: " + articleEntities.size());
+            binding.textView.setText(String.format("Articles received: %s", articleEntities.size()));
         });
     }
 

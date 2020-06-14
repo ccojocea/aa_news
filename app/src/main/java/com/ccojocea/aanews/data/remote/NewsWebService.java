@@ -87,8 +87,9 @@ public class NewsWebService {
     }
 
     //TODO PAGINATION
-    public Observable<JsonElement> executeNewsApi(int index) {
-        return newsApi.fetchListNews(App.getApp().getLocale().getCountry(), null);
+    public Observable<List<ArticleDto>> executeNewsApi(int index) {
+        return newsApi.fetchListNews(App.getApp().getLocale().getCountry(), null)
+                .map(articlesResponse -> articlesResponse.articles);
     }
 
     private static OkHttpClient initialiseClient() {
@@ -138,12 +139,12 @@ public class NewsWebService {
                 @Query(PARAM_Q) String query,
                 @Query(PARAM_HEADLINES_CATEGORY) String category,
                 @Query(PARAM_HEADLINES_COUNTRY) String country,
-                @Query(PARAM_PAGE) int page
+                @Query(PARAM_PAGE) Integer page
         );
 
         //TODO PAGINATION
         @GET(API_ROUTE_HEADLINES)
-        Observable<JsonElement> fetchListNews(
+        Observable<ArticlesResponse> fetchListNews(
                 @Query(PARAM_HEADLINES_COUNTRY) String country,
                 @Query(PARAM_PAGE) Integer page
         );
