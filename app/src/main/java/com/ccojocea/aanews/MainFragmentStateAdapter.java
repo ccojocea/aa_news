@@ -1,5 +1,6 @@
 package com.ccojocea.aanews;
 
+import android.content.Context;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -10,7 +11,7 @@ import androidx.viewpager2.adapter.FragmentStateAdapter;
 
 import com.ccojocea.aanews.bookmarks.BookmarksFragment;
 import com.ccojocea.aanews.common.BaseFragment;
-import com.ccojocea.aanews.localnews.LocalFragment;
+import com.ccojocea.aanews.localnews.HeadlinesFragment;
 import com.ccojocea.aanews.mynews.MyNewsFragment;
 import com.ccojocea.aanews.search.SearchFragment;
 
@@ -19,7 +20,7 @@ import java.util.List;
 
 public class MainFragmentStateAdapter extends FragmentStateAdapter {
 
-    private List<BaseFragment> fragments = new ArrayList<>();
+    private final List<BaseFragment> fragments = new ArrayList<>();
 
     public MainFragmentStateAdapter(@NonNull FragmentActivity fragmentActivity) {
         super(fragmentActivity);
@@ -28,17 +29,17 @@ public class MainFragmentStateAdapter extends FragmentStateAdapter {
     public void addFragment(@NonNull FragmentType fragmentType, @Nullable Bundle args) {
         BaseFragment fragment = null;
         switch (fragmentType) {
-            case LOCAL:
-                fragment = new LocalFragment();
+            case MY_NEWS:
+                fragment = new MyNewsFragment();
+                break;
+            case HEADLINES:
+                fragment = new HeadlinesFragment();
                 break;
             case BOOKMARKS:
                 fragment = new BookmarksFragment();
                 break;
             case SEARCH:
                 fragment = new SearchFragment();
-                break;
-            case MY_NEWS:
-                fragment = new MyNewsFragment();
                 break;
         }
         if (args != null) {
@@ -65,16 +66,41 @@ public class MainFragmentStateAdapter extends FragmentStateAdapter {
         return fragments.size();
     }
 
+    @Override
+    public long getItemId(int position) {
+        return super.getItemId(position);
+    }
+
     @NonNull
-    public String getPageTitle(int position) {
-        return fragments.get(position).getFragmentTitle();
+    public String getPageTitle(Context context, int position) {
+        return fragments.get(position).getFragmentTitle(context);
     }
 
     public enum FragmentType {
-        LOCAL,
-        MY_NEWS,
-        BOOKMARKS,
-        SEARCH
+        MY_NEWS(0),
+        HEADLINES(1),
+        BOOKMARKS(2),
+        SEARCH(3);
+
+        public int value;
+
+        FragmentType(int value) {
+            this.value = value;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+        @Nullable
+        public FragmentType getType(int value) {
+            for (FragmentType fragmentType : values()) {
+                if (fragmentType.value == value) {
+                    return fragmentType;
+                }
+            }
+            return null;
+        }
     }
 
 }

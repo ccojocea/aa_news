@@ -40,6 +40,14 @@ public class NewsRepository {
                 .subscribeOn(Schedulers.io());
     }
 
+    public Single<List<ArticleEntity>> getPagedTopHeadlines(int page) {
+        return newsWebService.fetchPagedTopHeadlines(page)
+                .map(list -> list.stream()
+                        .map(articleDto -> articleDto.toArticleEntity())
+                        .collect(Collectors.toList()))
+                .subscribeOn(Schedulers.io());
+    }
+
     //TODO From AA
     public Observable<List<ArticleEntity>> listenToAllAndroidArticles() {
         return AppDatabase.getInstance().articleDao().loadArticles()

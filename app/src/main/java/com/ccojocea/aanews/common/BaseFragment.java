@@ -1,5 +1,6 @@
 package com.ccojocea.aanews.common;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 
@@ -9,25 +10,21 @@ import androidx.fragment.app.Fragment;
 
 public abstract class BaseFragment extends Fragment {
 
-    private String fragmentTitle;
-
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         Bundle args = getArguments();
         if (getActivity() != null && args != null) {
             //TODO
         }
     }
 
-    public String getFragmentTitle() {
-        return fragmentTitle;
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
     }
 
-    public void setFragmentTitle(@NonNull String title) {
-        this.fragmentTitle = title;
-    }
+    public abstract String getFragmentTitle(Context context);
 
     /**
      * This method returns BaseActivity.

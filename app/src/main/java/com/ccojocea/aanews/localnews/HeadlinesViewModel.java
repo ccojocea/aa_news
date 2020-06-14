@@ -1,10 +1,10 @@
-package com.ccojocea.aanews;
-
-import android.os.Handler;
+package com.ccojocea.aanews.localnews;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+import androidx.paging.LivePagedListBuilder;
+import androidx.paging.PagedList;
 
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.data.models.entity.ArticleEntity;
@@ -16,44 +16,20 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import timber.log.Timber;
 
-public class NewsViewModel extends ViewModel {
+public class HeadlinesViewModel extends ViewModel {
+
+    private static final int PAGE_SIZE = 20;
 
     private MutableLiveData<Boolean> errorLiveData = new MutableLiveData<>(false);
     private MutableLiveData<List<ArticleEntity>> topHeadlinesLiveData = new MutableLiveData<>(new ArrayList<>());
-    private MutableLiveData<List<ArticleEntity>> articlesLiveData = new MutableLiveData<>(new ArrayList<>());
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    public NewsViewModel() {
-        //TODO
+//    public final LiveData<PagedList<ArticleEntity>> headlinesPagedLiveData;
+
+    public HeadlinesViewModel() {
         getTopHeadlines();
-
-//        listenToDatabaseArticles();
-
-//        new Handler().postDelayed(() -> {
-//            compositeDisposable.add(NewsRepository.getInstance().fetchArticles()
-//                    .observeOn(AndroidSchedulers.mainThread())
-//                    .subscribe(() -> {
-//                        Timber.d("Data fetch completed");
-//                    }, throwable -> {
-//                        Timber.e(throwable, "Data fetch failed");
-//                    })
-//            );
-//        }, 1000L);
-    }
-
-    private void listenToDatabaseArticles() {
-        compositeDisposable.add(NewsRepository.getInstance().listenToAllAndroidArticles()
-                // When the results come back, make sure we switch to main thread to handle them
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(articles -> {
-                    Timber.d("Received response: %s", articles);
-                    articlesLiveData.setValue(articles);
-                }, throwable -> {
-                    // Handle the error
-                    Timber.e(throwable, "Received error while fetching articles:");
-                    errorLiveData.setValue(true);
-                })
-        );
+//        getPagedTopHeadlines();
+//        headlinesPagedLiveData = new LivePagedListBuilder<>()
     }
 
     public LiveData<List<ArticleEntity>> getTopHeadlinesLiveData() {
@@ -71,6 +47,22 @@ public class NewsViewModel extends ViewModel {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(articleEntities -> {
                             topHeadlinesLiveData.setValue(articleEntities);
+                        }, throwable -> {
+                            Timber.e(throwable, "Error while fetching top headlines");
+                            errorLiveData.setValue(true);
+                        })
+        );
+    }
+
+    private void getPagedTopHeadlines() {
+        compositeDisposable.add(
+                NewsRepository.getInstance()
+                        .getPagedTopHeadlines(PAGE_SIZE)
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(articleEntities -> {
+                            List<ArticleEntity> currentList = topHeadlinesLiveData.getValue();
+                            currentList.addAll(articleEntities);
+                            topHeadlinesLiveData.setValue(currentList);
                         }, throwable -> {
                             Timber.e(throwable, "Error while fetching top headlines");
                             errorLiveData.setValue(true);

@@ -2,205 +2,233 @@ package com.ccojocea.aanews.webview;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
+import android.os.Bundle;
 import android.os.Handler;
+import android.os.SystemClock;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.BaseActivity;
+import com.ccojocea.aanews.common.Utils;
+import com.ccojocea.aanews.databinding.ActivityWebviewBinding;
 
+import timber.log.Timber;
+
+//TODO Add Bookmark / Share options here on titlebar
 public class WebViewActivity extends BaseActivity {
 
-    //TODO Add Bookmark option here
+    private ActivityWebviewBinding binding;
 
-    public static final String KEY_TITLE = "Title";
+    public static final String KEY_SOURCE_NAME = "Source";
     public static final String KEY_URL = "Url";
-    public static final String KEY_BACK = "GoBackToApp";
-    public static final String URL_PRIVACY = "https://www.kia.com/us/en/privacy";
-    public static final String URL_CONTACT_US = "https://ksupport.kiausa.com/ConsumerAffairs";
-    public static final String URL_KIA_COM = "https://www.kia.com/us/en";
-    //    public static final String URL_OTHER_SITES = "https://www.kia.com/us/en/content/other-kia-sites/kia-media";
-    //    public static final String URL_MPG = "https://kiampginfo.com/ ";
-    //    public static final String URL_DISCLAIMER = "https://www.kia.com/us/en/content/global-disclaimers/msrp";
-    public static final String URL_TERMS = "https://www.kia.com/us/en/terms-of-service";
-    public static final String URL_GENERAL_PRIVACY_LEGAL = "https://www.kia.com/us/en/privacy";
-    public static final String URL_UVO_PRIVACY_LEGAL = "https://owners.kia.com/us/en/privacy-policy.html";
-    public static final String URL_UVO_PRIVACY_LEGAL_TWELVE = "https://owners.kia.com/us/en/privacy-policy.html#twelve";
-    public static final String URL_UVO_TERMS_OF_SERVICE = "https://owners.kia.com/us/en/terms-of-service.html";
-    public static final String URL_GENERAL_TERMS_OF_USE = "https://www.kia.com/us/en/terms-of-service";
-    public static final String URL_FINANCE_MAKE_PAYMENT = " https://www.kmfusa.com/";
-    public static final String URL_FINANCE_KMFA_PROFILE = " https://www.kmfusa.com/account-profile";
-    public static final String URL_FINANCE_KMFA_PROFILE_LOGIN = "https://www.kmfusa.com/Login/Index?ReturnUrl=%2faccount-profile";
-    public static final String URL_LINK_FAQ = " https://owners.kia.com/us/en/faqs.html";
-    public static final String URL_LINK_TROUBLESHOOTING = "https://owners.kia.com/us/en/uvo-troubleshooting.html";
-    public static final String URL_KIA_OWNERS = "https://owners.kia.com";
+    public static final String KEY_SAVED = "Saved";
 
-
-    //    public static final String URL_SOCIAL_FACEBOOK = "https://www.facebook.com/kia";
-    //    public static final String URL_SOCIAL_TWITTER = "https://twitter.com/Kia";
-    //    public static final String URL_SOCIAL_PINTERST = "https://www.pinterest.com/kiamotorsusa/";
-    //    public static final String URL_SOCIAL_INSTAGRAM = "https://www.instagram.com/kiamotorsusa/?hl=en";
-    //    public static final String URL_SOCIAL_YOUTUBE = "https://www.youtube.com/user/KiaMotorsAmerica";
-
+    private static final int WEB_DELAY = 200;
     private static final int DELAY = 500;
+    private long lastClickTime;
 
-    public static final int REQUEST_WEB_WITH_BACK_RESULT = 1112;
-    public static final int RESULT_BACK = 1113;
-
-//    @Extra(KEY_BACK)
-    protected boolean goBackToApp;
-
-//    @Extra(KEY_TITLE)
-    protected Integer resId;
-
-//    @Extra(KEY_URL)
-    protected String url;
-
-//    @ViewById
-    WebView webView;
-
-//    @ViewById
-    View blockingView;
+    private String articleUrl;
+    private boolean isSaved;
 
     @SuppressLint("SetJavaScriptEnabled")
-//    @AfterViews
-    protected void init() {
-        // enable javascript
-        webView.getSettings().setJavaScriptEnabled(true);
-        webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
-        webView.getSettings().setDomStorageEnabled(true);
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        webView.setWebViewClient(new WebViewController());
-        if (url != null && resId != null) {
-//            setToolbarType(ToolbarType.BACK, resId, this);
-            onBlockUserInteraction();
-            webView.loadUrl(url);
+        binding = ActivityWebviewBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        // enable javascript
+        binding.webView.getSettings().setJavaScriptEnabled(true);
+        binding.webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+        binding.webView.getSettings().setDomStorageEnabled(true);
+
+        binding.webView.setWebViewClient(new WebViewController());
+
+        Intent intent = getIntent();
+        isSaved = intent.getBooleanExtra(KEY_SAVED, false);
+        articleUrl = intent.getStringExtra(KEY_URL);
+        String title = intent.getStringExtra(KEY_SOURCE_NAME);
+
+        setSupportActionBar(binding.toolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            if (title != null) {
+                setTitle(title);
+            }
+        }
+
+        if (articleUrl != null) {
+            binding.webView.loadUrl(articleUrl);
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.webview_menu, menu);
+        return true;
+    }
+
+    @Nullable
+    private MenuItem share;
+
+    @Nullable
+    private MenuItem bookmark;
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        share = menu.getItem(0);
+        bookmark = menu.getItem(1);
+        if (share != null && bookmark != null) {
+            if (isSaved) {
+                bookmark.setIcon(R.drawable.ic_bookmark_selected);
+            } else {
+                bookmark.setIcon(R.drawable.ic_bookmark);
+            }
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (SystemClock.elapsedRealtime() - lastClickTime < DELAY) {
+            return true;
+        }
+        lastClickTime = SystemClock.elapsedRealtime();
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                finish();
+                return true;
+            case R.id.action_bookmark:
+                //TODO Bookmark/Un-bookmark and toggle icon based on db success
+                if (isSaved) {
+                    isSaved = false;
+                    item.setIcon(R.drawable.ic_bookmark);
+                } else {
+                    isSaved = true;
+                    item.setIcon(R.drawable.ic_bookmark_selected);
+                }
+                return true;
+            case R.id.action_share:
+                Utils.shareLink(this, articleUrl);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
     @Override
     public void onBackPressed() {
-        if (webView.copyBackForwardList().getCurrentIndex() > 0) {
-            webView.goBack();
+        if (binding.webView.copyBackForwardList().getCurrentIndex() > 0) {
+            binding.webView.goBack();
         } else {
-            setResult(RESULT_BACK);
             finish();
         }
     }
 
-//    @Override
-    public void onBackButtonClicked() {
-        if (goBackToApp) {
-            setResult(RESULT_BACK);
-            finish();
-        } else {
-            onBackPressed();
+    public void allowUserInteraction() {
+        if (!isFinishing() || !isDestroyed()) {
+            //        binding.blockingView.setVisibility(View.GONE);
+            binding.progressBar.setVisibility(View.INVISIBLE);
+            if (share != null && bookmark != null) {
+                share.setVisible(true);
+                bookmark.setVisible(true);
+            }
         }
     }
 
-//    @Override
-    public void onAllowUserInteraction() {
-//        if (toolbar != null) {
-//            toolbar.onAllowUserInteraction();
-//        }
-        blockingView.setVisibility(View.GONE);
-    }
-
-//    @Override
-    public void onBlockUserInteraction() {
-//        if (toolbar != null) {
-//            toolbar.onBlockUserInteraction();
-//        }
-        blockingView.setVisibility(View.VISIBLE);
+    public void blockUserInteraction() {
+        if (!isFinishing() || !isDestroyed()) {
+            //        binding.blockingView.setVisibility(View.VISIBLE);
+            binding.progressBar.setVisibility(View.VISIBLE);
+            if (share != null && bookmark != null) {
+                share.setVisible(false);
+                bookmark.setVisible(false);
+            }
+        }
     }
 
     public class WebViewController extends WebViewClient {
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-//            Logger.debug(getClass(), "WebViewDebug - shouldOverrideUrlLoading url: " + request.getUrl().toString());
-            view.loadUrl(request.getUrl().toString());
-            return true;
+            return super.shouldOverrideUrlLoading(view, request);
+//            view.loadUrl(request.getUrl().toString());
+//            return true;
         }
 
-        //inProgress = true
         @Override
         public void onPageStarted(WebView view, String url, Bitmap favicon) {
-//            Logger.debug(getClass(), "WebViewDebug - onPageStarted url: " + url);
             super.onPageStarted(view, url, favicon);
+            blockUserInteraction();
         }
 
-        //inProgress = false - spinner loading
         @Override
         public void onPageFinished(WebView view, String url) {
-//            Logger.debug(getClass(), "WebViewDebug - onPageFinished url: " + url);
             super.onPageFinished(view, url);
-            //This is called way too early in the case of appointment requests since there are several redirects until the main page is reached
-            //            new Handler().postDelayed(WebViewActivity.this::onAllowUserInteraction, delay);
+            allowUserInteraction();
         }
 
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-//            Logger.debug(getClass(), "WebViewDebug - onReceivedError url: " + request.getUrl().toString());
-            new Handler().postDelayed(WebViewActivity.this::onAllowUserInteraction, DELAY);
-        }
-
-        @Override
-        public void onPageCommitVisible(WebView view, String url) {
-//            Logger.debug(getClass(), "WebViewDebug - onPageCommitVisible - url: " + url);
-            super.onPageCommitVisible(view, url);
-            new Handler().postDelayed(WebViewActivity.this::onAllowUserInteraction, DELAY);
+            if (!WebViewActivity.this.isFinishing() || !WebViewActivity.this.isDestroyed()) {
+                Toast.makeText(WebViewActivity.this, String.format(getString(R.string.error_code_description), error.getErrorCode(), error.getDescription()), Toast.LENGTH_LONG).show();
+            }
+            new Handler().postDelayed(WebViewActivity.this::allowUserInteraction, WEB_DELAY);
         }
 
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
             final AlertDialog.Builder builder = new AlertDialog.Builder(WebViewActivity.this);
-            String message = "SSL Certificate error.";
+            String message = getString(R.string.ssl_error);
             switch (error.getPrimaryError()) {
                 case SslError.SSL_UNTRUSTED:
-                    message = "The certificate authority is not trusted.";
+                    message = getString(R.string.ssl_error_untrusted);
                     break;
                 case SslError.SSL_EXPIRED:
-                    message = "The Server certificate has expired.";
+                    message = getString(R.string.ssl_error_expired);
                     break;
                 case SslError.SSL_IDMISMATCH:
-                    message = "The certificate domain doesn't match.";
+                    message = getString(R.string.ssl_error_mismatch);
                     break;
                 case SslError.SSL_NOTYETVALID:
-                    message = "The certificate is not yet valid.";
+                    message = getString(R.string.ssl_error_not_yet_valid);
                     break;
             }
-            message += " Do you want to continue anyway?";
-            builder.setTitle("SSL Certificate Error");
+            message += getString(R.string.ssl_error_continue);
+            builder.setTitle(getString(R.string.ssl_error));
             builder.setMessage(message);
-            builder.setPositiveButton("continue", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    handler.proceed();
-                }
-            });
-            builder.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    handler.cancel();
-                    onAllowUserInteraction();
-                }
+            builder.setPositiveButton(R.string.ssl_button_continue, (dialog, which) -> handler.proceed());
+            builder.setNegativeButton(R.string.ssl_button_cancel, (dialog, which) -> {
+                handler.cancel();
+                allowUserInteraction();
             });
             final AlertDialog dialog = builder.create();
-            dialog.show();
+            if (!WebViewActivity.this.isFinishing() || !WebViewActivity.this.isDestroyed()) {
+                dialog.show();
+            }
         }
 
         @Override
         public void onLoadResource(WebView view, String url) {
             super.onLoadResource(view, url);
             if (view.getProgress() > 0) {
-//                Logger.debug(getClass(), "WebViewDebug - onLoadResource - progress: " + view.getProgress());
+                Timber.d("WebViewDebug - onLoadResource - progress: %s", view.getProgress());
             }
         }
 

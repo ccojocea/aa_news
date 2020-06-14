@@ -4,16 +4,19 @@ import com.ccojocea.aanews.BuildConfig;
 import com.ccojocea.aanews.common.App;
 import com.ccojocea.aanews.data.models.dto.ArticleDto;
 import com.ccojocea.aanews.data.models.responses.ArticlesResponse;
+import com.google.gson.JsonElement;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -78,6 +81,16 @@ public class NewsWebService {
                 .map(articlesResponse -> articlesResponse.articles);
     }
 
+    public Single<List<ArticleDto>> fetchPagedTopHeadlines(int page) {
+        return newsApi.fetchPagedTopHeadlines(null, null, App.getApp().getLocale().getCountry(), page)
+                .map(articlesResponse -> articlesResponse.articles);
+    }
+
+    //TODO PAGINATION
+    public Observable<JsonElement> executeNewsApi(int index) {
+        return newsApi.fetchListNews(App.getApp().getLocale().getCountry(), null);
+    }
+
     private static OkHttpClient initialiseClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
@@ -118,6 +131,21 @@ public class NewsWebService {
                 @Query(PARAM_Q) String query,
                 @Query(PARAM_HEADLINES_CATEGORY) String category,
                 @Query(PARAM_HEADLINES_COUNTRY) String country
+        );
+
+        @GET(API_ROUTE_HEADLINES)
+        Single<ArticlesResponse> fetchPagedTopHeadlines(
+                @Query(PARAM_Q) String query,
+                @Query(PARAM_HEADLINES_CATEGORY) String category,
+                @Query(PARAM_HEADLINES_COUNTRY) String country,
+                @Query(PARAM_PAGE) int page
+        );
+
+        //TODO PAGINATION
+        @GET(API_ROUTE_HEADLINES)
+        Observable<JsonElement> fetchListNews(
+                @Query(PARAM_HEADLINES_COUNTRY) String country,
+                @Query(PARAM_PAGE) Integer page
         );
 
     }

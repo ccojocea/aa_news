@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="card_view_radius">8dp</dimen>
+    <dimen name="default_fragment_padding">12dp</dimen>
+    <dimen name="card_view_padding">12dp</dimen>
+    <dimen name="large_item_image_content_padding">6dp</dimen>
+</resources>

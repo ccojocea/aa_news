@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <item
-        android:id="@+id/action_mode"
-        android:icon="@drawable/light_mode"
+        android:id="@+id/action_settings"
+        android:icon="@drawable/ic_settings"
         app:showAsAction="ifRoom"
-        android:title="@string/mode">
+        android:title="@string/settings_title">
     </item>
+
 </menu>

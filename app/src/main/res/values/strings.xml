@@ -1,9 +1,50 @@
 <resources>
+
+    <!-- GENERAL -->
     <string name="app_name">AANews</string>
-    <string name="mode">Mode</string>
-    <string name="settings">Settings</string>
-    <string name="tab_local_news">LOCAL NEWS</string>
+    <string name="back_to_exit">Press back again to exit</string>
+
+    <!-- HEADLINES -->
+    <string name="tab_headlines">HEADLINES</string>
+    <string name="title_headlines">LOCAL HEADLINES</string>
+
+    <!-- MY NEWS -->
     <string name="tab_my_news">MY NEWS</string>
+
+    <!-- BOOKMARKS -->
     <string name="tab_bookmarks">BOOKMARKS</string>
+
+    <!-- SEARCH -->
     <string name="tab_search">SEARCH</string>
+
+    <!-- SETTINGS FRAGMENT -->
+    <string name="settings_title">SETTINGS</string>
+    <string name="settings_headline_ui_mode_selection">Choose your interface mode</string>
+    <string name="settings_system_mode_display">Follow system settings</string>
+    <string name="settings_light_mode_display">Light mode</string>
+    <string name="settings_dark_mode_display">Dark mode</string>
+    <string name="preference_key_ui_mode">key_pref_ui_mode</string>
+
+    <!-- SETTINGS FRAGMENT - NEWS -->
+    <string name="settings_news_technology">Technology</string>
+    <string name="settings_news_travel">Travel</string>
+    <string name="settings_news_bitcoin">Bitcoin</string>
+
+    <!--  WEBVIEW  -->
+    <string name="error_please_try_again">An error has occurred please try again.</string>
+    <string name="ssl_error_not_yet_valid">The certificate is not yet valid.</string>
+    <string name="ssl_error_mismatch">The certificate domain doesn\'t match.</string>
+    <string name="ssl_error_expired">The server certificate has expired.</string>
+    <string name="ssl_error_untrusted">The certificate authority is not trusted.</string>
+    <string name="ssl_error">SSL Certificate error.</string>
+    <string name="ssl_error_continue">\" Do you want to continue anyway?\"</string>
+    <string name="ssl_button_continue">Continue</string>
+    <string name="ssl_button_cancel">Cancel</string>
+    <string name="share">Share</string>
+    <string name="bookmark">Bookmark</string>
+    <string name="share_article_title">Share article</string>
+    <string name="error_code_description"><![CDATA[Error code: %d & description: %s]]></string>
+
+    <string name="lorem_ipsum">\"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\"</string>
+
 </resources>

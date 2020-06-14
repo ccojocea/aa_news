@@ -5,6 +5,7 @@
       <w>gson</w>
       <w>okhttp</w>
       <w>roboelectric</w>
+      <w>webview</w>
     </words>
   </dictionary>
 </component>

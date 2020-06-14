@@ -1,5 +1,6 @@
 package com.ccojocea.aanews.search;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,11 +12,11 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.BaseFragment;
-import com.ccojocea.aanews.databinding.LayoutSearchFragmentBinding;
+import com.ccojocea.aanews.databinding.FragmentSearchBinding;
 
 public class SearchFragment extends BaseFragment {
 
-    private LayoutSearchFragmentBinding binding;
+    private FragmentSearchBinding binding;
     private SearchViewModel viewModel;
 
     @Override
@@ -23,13 +24,12 @@ public class SearchFragment extends BaseFragment {
         super.onCreate(savedInstanceState);
         //init ViewModel - use requireActivity() so this is bound to the activity (otherwise it would be recreated on config changes)
         viewModel = new ViewModelProvider(requireActivity()).get(SearchViewModel.class);
-        setFragmentTitle(getString(R.string.tab_search));
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        binding = LayoutSearchFragmentBinding.inflate(inflater, container, false);
+        binding = FragmentSearchBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
 
@@ -37,6 +37,13 @@ public class SearchFragment extends BaseFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         //TODO Setup LiveData
+
+        binding.textView.setText(getClass().getSimpleName());
+    }
+
+    @Override
+    public String getFragmentTitle(Context context) {
+        return context.getString(R.string.tab_search);
     }
 
     @Override

@@ -13,6 +13,9 @@ buildscript {
         androidxRecyclerViewVersion = '1.1.0'
         androidxLifecycleVersion = '2.2.0'
         androidxViewPager2Version = '1.0.0'
+        androidxPreference = '1.1.1'
+        androidxSwipeRefresh = '1.0.0'
+        androidxPagingVersion = '2.1.2'
         materialVersion = '1.1.0'
 
         // database

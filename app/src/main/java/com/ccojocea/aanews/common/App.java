@@ -1,13 +1,17 @@
 package com.ccojocea.aanews.common;
 
 import android.app.Application;
+import android.content.SharedPreferences;
 
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
+import androidx.preference.PreferenceManager;
 
 import com.ccojocea.aanews.BuildConfig;
+import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.data.local.AppDatabase;
 
 import java.util.Locale;
@@ -36,8 +40,11 @@ public class App extends Application implements LifecycleObserver {
             Timber.plant(new Timber.DebugTree());
         }
 
+        //TODO
         locale = new Locale("ro", "RO");
+
         AppDatabase.initialize(this);
+        setupDisplayMode();
     }
 
     public Locale getLocale() {
@@ -50,6 +57,19 @@ public class App extends Application implements LifecycleObserver {
 
     public boolean isInForeground() {
         return inForeground;
+    }
+
+    private void setupDisplayMode() {
+        // get preferences
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String mode = sharedPreferences.getString(getString(R.string.preference_key_ui_mode), getString(R.string.settings_system_mode_display));
+        if (mode.equals(getString(R.string.settings_system_mode_display))) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        } else if (mode.equals(getString(R.string.settings_light_mode_display))) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        }
     }
 
     // app in foreground

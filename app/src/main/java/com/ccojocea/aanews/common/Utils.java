@@ -1,13 +1,25 @@
 package com.ccojocea.aanews.common;
 
+import android.content.Context;
+import android.content.Intent;
+
 import androidx.annotation.NonNull;
 
+import com.ccojocea.aanews.R;
 import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class Utils {
+
+    public static void shareLink(@NonNull Context context, @NonNull String articleUrl) {
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        intent.putExtra(Intent.EXTRA_TEXT, articleUrl);
+        context.startActivity(Intent.createChooser(intent, context.getString(R.string.share_article_title)));
+    }
 
     @NonNull
     public static Gson getAppGson() {

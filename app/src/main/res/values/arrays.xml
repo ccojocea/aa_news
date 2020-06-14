@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="pref_ui_mode_values">
+        <item>@string/settings_system_mode_display</item>
+        <item>@string/settings_light_mode_display</item>
+        <item>@string/settings_dark_mode_display</item>
+    </string-array>
+    <string-array name="pref_ui_mode_entries">
+        <item>@string/settings_system_mode_display</item>
+        <item>@string/settings_light_mode_display</item>
+        <item>@string/settings_dark_mode_display</item>
+    </string-array>
+
+    <string-array name="pref_news_values">
+        <item>bitcoin</item>
+        <item>travel</item>
+        <item>technology</item>
+    </string-array>
+    <string-array name="pref_news_entries">
+        <item>@string/settings_news_bitcoin</item>
+        <item>@string/settings_news_travel</item>
+        <item>@string/settings_news_technology</item>
+    </string-array>
+</resources>
