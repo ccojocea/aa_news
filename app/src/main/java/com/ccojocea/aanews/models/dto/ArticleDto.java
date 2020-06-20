@@ -1,6 +1,10 @@
 package com.ccojocea.aanews.models.dto;
 
+import android.media.tv.TvView;
+
 import com.ccojocea.aanews.models.entity.ArticleEntity;
+
+import timber.log.Timber;
 
 public class ArticleDto {
 
@@ -47,6 +51,22 @@ public class ArticleDto {
     }
 
     public ArticleEntity toArticleEntity(boolean isSaved) {
+        if (urlToImage != null) {
+            if (urlToImage.startsWith("//")) {
+                try {
+                    urlToImage = urlToImage.replace("//", url.substring(0, url.indexOf("/")));
+                } catch (Exception e) {
+                    Timber.e(e);
+                }
+            }
+            if (urlToImage.startsWith("/")) {
+                try {
+                    urlToImage = urlToImage.replace("/", url.substring(0, url.indexOf("/")));
+                } catch (Exception e) {
+                    Timber.e(e);
+                }
+            }
+        }
         return new ArticleEntity(
                 url,
                 source != null ? new ArticleEntity.Source(source.id, source.name) : null,

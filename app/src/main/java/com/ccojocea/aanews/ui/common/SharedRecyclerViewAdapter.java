@@ -1,10 +1,12 @@
 package com.ccojocea.aanews.ui.common;
 
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,6 +14,7 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.TimeUtil;
 import com.ccojocea.aanews.common.Utils;
@@ -23,9 +26,6 @@ import com.ccojocea.aanews.ui.webview.WebViewActivity;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import io.reactivex.Observable;
-import io.reactivex.disposables.Disposable;
 
 public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
@@ -54,35 +54,38 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         ArticleEntity article = items.get(position);
-
         switch (getItemViewType(position)) {
             case VIEW_TYPE_DEFAULT:
-                LayoutDefaultNewsItemBinding defaultHolderBinding = ((DefaultItemViewHolder) holder).binding;
-                defaultHolderBinding.getRoot().setOnClickListener(v -> {
-                    Intent intent = new Intent(defaultHolderBinding.getRoot().getContext(), WebViewActivity.class);
+                LayoutDefaultNewsItemBinding layoutDefaultNewsItemBinding = ((DefaultItemViewHolder) holder).binding;
+                layoutDefaultNewsItemBinding.description.setText(article.getDescription() != null ? article.getDescription() : article.getContent());
+            case VIEW_TYPE_LARGE:
+                ArticleBindingInterface binding = ((ArticleBindingInterface) holder);
+                binding.getRoot().setOnClickListener(v -> {
+                    Intent intent = new Intent(binding.getRoot().getContext(), WebViewActivity.class);
                     intent.putExtra(WebViewActivity.KEY_SOURCE_NAME, article.getSource().getName());
                     intent.putExtra(WebViewActivity.KEY_URL, article.getUrl());
                     intent.putExtra(WebViewActivity.KEY_SAVED, article.isSaved());
-                    defaultHolderBinding.getRoot().getContext().startActivity(intent);
+                    binding.getRoot().getContext().startActivity(intent);
                 });
 
-                defaultHolderBinding.share.setOnClickListener(v -> {
-                    Utils.shareLink(defaultHolderBinding.getRoot().getContext(), article.getUrl());
+                binding.getShare().setOnClickListener(v -> {
+                    Utils.shareLink(binding.getRoot().getContext(), article.getUrl());
                 });
 
-                defaultHolderBinding.bookmark.setOnClickListener(v -> {
+                binding.getBookmark().setOnClickListener(v -> {
                     if (Utils.shouldPreventMisClick()) {
                         return;
                     }
+                    //this part causes flickering and moving of some items if used on first items in the list and recycler is scrolled at position 0
                     if (article.isSaved()) {
                         article.setSaved(false);
-                        defaultHolderBinding.bookmark.setImageResource(R.drawable.ic_bookmark);
+                        binding.getBookmark().setImageResource(R.drawable.ic_bookmark);
                         if (listener != null) {
                             listener.onBookmarkClicked(position, article.getUrl(), false);
                         }
                     } else {
                         article.setSaved(true);
-                        defaultHolderBinding.bookmark.setImageResource(R.drawable.ic_bookmark_selected);
+                        binding.getBookmark().setImageResource(R.drawable.ic_bookmark_selected);
                         if (listener != null) {
                             listener.onBookmarkClicked(position, article.getUrl(), true);
                         }
@@ -94,82 +97,23 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
                 });
 
                 if (article.isSaved()) {
-                    defaultHolderBinding.bookmark.setImageResource(R.drawable.ic_bookmark_selected);
+                    binding.getBookmark().setImageResource(R.drawable.ic_bookmark_selected);
                 } else {
-                    defaultHolderBinding.bookmark.setImageResource(R.drawable.ic_bookmark);
+                    binding.getBookmark().setImageResource(R.drawable.ic_bookmark);
                 }
-                defaultHolderBinding.author.setText(article.getAuthor());
-                defaultHolderBinding.description.setText(article.getDescription() != null ? article.getDescription() : article.getContent());
-                defaultHolderBinding.publishedAt.setText(TimeUtil.convertToReadableTime(article.getPublishedAt()));
-                defaultHolderBinding.sourceName.setText(article.getSource().getName());
-                defaultHolderBinding.title.setText(article.getTitle());
+                binding.getAuthorText().setText(article.getAuthor());
+                binding.getPublishedAtText().setText(TimeUtil.convertToReadableTime(article.getPublishedAt()));
+                binding.getSourceNameText().setText(article.getSource().getName());
+                binding.getTitleText().setText(article.getTitle());
                 if (article.getUrlToImage() != null) {
-                    Glide.with(defaultHolderBinding.getRoot().getContext())
+                    Glide.with(binding.getRoot().getContext())
                             .load(article.getUrlToImage())
                             .error(R.drawable.placeholder)
-                            .into(defaultHolderBinding.imageView);
+                            .into(binding.getArticleImage());
                 } else {
-                    Glide.with(defaultHolderBinding.getRoot().getContext())
+                    Glide.with(binding.getRoot().getContext())
                             .load(R.drawable.placeholder)
-                            .into(defaultHolderBinding.imageView);
-                }
-                break;
-            case VIEW_TYPE_LARGE:
-                LayoutLargeNewsItemBinding largeHolderBinding = ((LargeItemViewHolder) holder).binding;
-                largeHolderBinding.getRoot().setOnClickListener(v -> {
-                    Intent intent = new Intent(largeHolderBinding.getRoot().getContext(), WebViewActivity.class);
-                    intent.putExtra(WebViewActivity.KEY_SOURCE_NAME, article.getSource().getName());
-                    intent.putExtra(WebViewActivity.KEY_URL, article.getUrl());
-                    intent.putExtra(WebViewActivity.KEY_SAVED, article.isSaved());
-                    largeHolderBinding.getRoot().getContext().startActivity(intent);
-                });
-
-                largeHolderBinding.share.setOnClickListener(v -> {
-                    Utils.shareLink(largeHolderBinding.getRoot().getContext(), article.getUrl());
-                });
-
-                largeHolderBinding.bookmark.setOnClickListener(v -> {
-                    if (Utils.shouldPreventMisClick()) {
-                        return;
-                    }
-                    //this part causes flickering and moving of some items if used on first item in the list
-                    if (article.isSaved()) {
-                        article.setSaved(false);
-                        largeHolderBinding.bookmark.setImageResource(R.drawable.ic_bookmark);
-                        if (listener != null) {
-                            listener.onBookmarkClicked(position, article.getUrl(), false);
-                        }
-                    } else {
-                        article.setSaved(true);
-                        largeHolderBinding.bookmark.setImageResource(R.drawable.ic_bookmark_selected);
-                        if (listener != null) {
-                            listener.onBookmarkClicked(position, article.getUrl(), true);
-                        }
-                    }
-                    //TODO Call notifyItemChanged with position / payload
-//                    notifyItemChanged(position); //no need to refresh at this point
-                    //TODO Test with DiffUtil
-                    //TODO Test with RxJava
-                });
-
-                if (article.isSaved()) {
-                    largeHolderBinding.bookmark.setImageResource(R.drawable.ic_bookmark_selected);
-                } else {
-                    largeHolderBinding.bookmark.setImageResource(R.drawable.ic_bookmark);
-                }
-                largeHolderBinding.author.setText(article.getAuthor());
-                largeHolderBinding.publishedAt.setText(TimeUtil.convertToReadableTime(article.getPublishedAt()));
-                largeHolderBinding.sourceName.setText(article.getSource().getName());
-                largeHolderBinding.title.setText(article.getTitle());
-                if (article.getUrlToImage() != null) {
-                    Glide.with(largeHolderBinding.getRoot().getContext())
-                            .load(article.getUrlToImage())
-                            .error(R.drawable.placeholder)
-                            .into(largeHolderBinding.imageView);
-                } else {
-                    Glide.with(largeHolderBinding.getRoot().getContext())
-                            .load(R.drawable.placeholder)
-                            .into(largeHolderBinding.imageView);
+                            .into(binding.getArticleImage());
                 }
                 break;
             case VIEW_TYPE_ADD:
@@ -183,7 +127,7 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
         super.onBindViewHolder(holder, position, payloads);
     }
 
-    //TODO for ADD_VIEW
+    //TODO VIEW_TYPE_ADD
     @Override
     public int getItemViewType(int position) {
         if (position % 5 == 0) {
@@ -211,7 +155,7 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
         return null;
     }
 
-    public static class DefaultItemViewHolder extends RecyclerView.ViewHolder {
+    public static class DefaultItemViewHolder extends RecyclerView.ViewHolder implements ArticleBindingInterface {
 
         private LayoutDefaultNewsItemBinding binding;
 
@@ -220,15 +164,95 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
             this.binding = binding;
         }
 
+        @Override
+        public View getRoot() {
+            return binding.getRoot();
+        }
+
+        @Override
+        public ImageView getArticleImage() {
+            return binding.articleImage;
+        }
+
+        @Override
+        public ImageView getShare() {
+            return binding.share;
+        }
+
+        @Override
+        public ImageView getBookmark() {
+            return binding.bookmark;
+        }
+
+        @Override
+        public TextView getAuthorText() {
+            return binding.author;
+        }
+
+        @Override
+        public TextView getPublishedAtText() {
+            return binding.publishedAt;
+        }
+
+        @Override
+        public TextView getSourceNameText() {
+            return binding.sourceName;
+        }
+
+        @Override
+        public TextView getTitleText() {
+            return binding.title;
+        }
+
     }
 
-    public static class LargeItemViewHolder extends RecyclerView.ViewHolder {
+    public static class LargeItemViewHolder extends RecyclerView.ViewHolder implements ArticleBindingInterface {
 
         private LayoutLargeNewsItemBinding binding;
 
         public LargeItemViewHolder(LayoutLargeNewsItemBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
+        }
+
+        @Override
+        public View getRoot() {
+            return binding.getRoot();
+        }
+
+        @Override
+        public ImageView getArticleImage() {
+            return binding.articleImage;
+        }
+
+        @Override
+        public ImageView getShare() {
+            return binding.share;
+        }
+
+        @Override
+        public ImageView getBookmark() {
+            return binding.bookmark;
+        }
+
+        @Override
+        public TextView getAuthorText() {
+            return binding.author;
+        }
+
+        @Override
+        public TextView getPublishedAtText() {
+            return binding.publishedAt;
+        }
+
+        @Override
+        public TextView getSourceNameText() {
+            return binding.sourceName;
+        }
+
+        @Override
+        public TextView getTitleText() {
+            return binding.title;
         }
 
     }
@@ -244,11 +268,23 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
     }
 
-    private interface BindingInterface {
+    private interface ArticleBindingInterface {
 
-        Context getRootContext();
+        View getRoot();
 
-        
+        ImageView getArticleImage();
+
+        ImageView getShare();
+
+        ImageView getBookmark();
+
+        TextView getAuthorText();
+
+        TextView getPublishedAtText();
+
+        TextView getSourceNameText();
+
+        TextView getTitleText();
 
     }
 

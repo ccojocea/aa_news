@@ -112,7 +112,7 @@ public class NewsWebService {
         builder.connectTimeout(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
         builder.readTimeout(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
         builder.writeTimeout(TIMEOUT_MILLISECONDS, TimeUnit.MILLISECONDS);
-        builder.connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS));
+        builder.connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT));
 
         return builder.build();
     }

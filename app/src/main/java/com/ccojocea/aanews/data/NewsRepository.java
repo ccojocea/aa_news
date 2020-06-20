@@ -22,6 +22,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 
 public class NewsRepository {
@@ -116,6 +117,7 @@ public class NewsRepository {
                 newsWebService.fetchTopHeadlines()
                         .subscribeOn(Schedulers.io())
                         .map(list -> list.stream()
+                            .filter(articleDto -> articleDto.url != null)
                             .map(articleDto -> articleDto.toArticleEntity(savedUrlSet.contains(articleDto.url)))
                             .collect(Collectors.toList()));
 
@@ -154,6 +156,7 @@ public class NewsRepository {
                 .flatMapCompletable((List<ArticleDto> articleDtos) -> {
                     // Convert models from DTO to Entity (can also be done using a for)
                     List<ArticleEntity> articleEntities = articleDtos.stream()
+                            .filter(articleDto -> articleDto.url != null)
                             .map(articleDto -> articleDto.toArticleEntity(false))
                             .collect(Collectors.toList());
                     // And save them into the database
@@ -226,4 +229,5 @@ public class NewsRepository {
             return null;
         }
     }
+
 }

@@ -53,11 +53,11 @@ public class BookmarksRecyclerAdapter extends RecyclerView.Adapter<BookmarksRecy
             Glide.with(holder.binding.getRoot().getContext())
                     .load(article.getUrlToImage())
                     .error(R.drawable.placeholder)
-                    .into(holder.binding.imageView);
+                    .into(holder.binding.articleImage);
         } else {
             Glide.with(holder.binding.getRoot().getContext())
                     .load(R.drawable.placeholder)
-                    .into(holder.binding.imageView);
+                    .into(holder.binding.articleImage);
         }
     }
 

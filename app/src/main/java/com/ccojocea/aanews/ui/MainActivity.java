@@ -85,6 +85,7 @@ public class MainActivity extends BaseActivity {
         adapter.addFragment(MainFragmentStateAdapter.FragmentType.SEARCH, null);
         binding.viewPager2.setPageTransformer(new HorizontalFlipTransformation());
         binding.viewPager2.setAdapter(adapter);
+//        binding.viewPager2.setUserInputEnabled(getSwipeSetting()); //TODO
         int limit = (adapter.getItemCount() > 1 ? adapter.getItemCount() - 1 : ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);
         binding.viewPager2.setOffscreenPageLimit(limit);
 
