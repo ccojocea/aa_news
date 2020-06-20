@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.ccojocea.aanews.common.App;
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
@@ -17,18 +18,21 @@ import timber.log.Timber;
 
 public class HeadlinesViewModel extends ViewModel {
 
+    protected final NewsRepository newsRepository;
+
     private static final int PAGE_SIZE = 20;
 
-    private MutableLiveData<Boolean> errorLiveData = new MutableLiveData<>(false);
-    private MutableLiveData<List<ArticleEntity>> topHeadlinesLiveData = new MutableLiveData<>(new ArrayList<>());
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private final MutableLiveData<Boolean> errorLiveData = new MutableLiveData<>(false);
+    private final MutableLiveData<List<ArticleEntity>> topHeadlinesLiveData = new MutableLiveData<>(new ArrayList<>());
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
 //    public final LiveData<PagedList<ArticleEntity>> headlinesPagedLiveData;
 
     public HeadlinesViewModel() {
+        newsRepository = App.getAppComponent().newsRepository();
         getTopHeadlines();
 //        getPagedTopHeadlines();
-//        headlinesPagedLiveData = new LivePagedListBuilder<>()
+//        headlinesPagedLiveData = new LivePagedListBuilder<>();
     }
 
     public LiveData<List<ArticleEntity>> getTopHeadlinesLiveData() {
@@ -41,8 +45,7 @@ public class HeadlinesViewModel extends ViewModel {
 
     public void getTopHeadlines() {
         compositeDisposable.add(
-                NewsRepository.getInstance()
-                        .getTopHeadlines()
+                newsRepository.getTopHeadlines()
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(articleEntities -> {
                             topHeadlinesLiveData.setValue(articleEntities);
@@ -55,12 +58,12 @@ public class HeadlinesViewModel extends ViewModel {
 
     private void getPagedTopHeadlines() {
         compositeDisposable.add(
-                NewsRepository.getInstance()
+                newsRepository
                         .getPagedTopHeadlines(PAGE_SIZE)
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(articleEntities -> {
                             List<ArticleEntity> currentList = topHeadlinesLiveData.getValue();
-                            currentList.addAll(articleEntities);
+                            if (currentList != null) currentList.addAll(articleEntities);
                             topHeadlinesLiveData.setValue(currentList);
                         }, throwable -> {
                             Timber.e(throwable, "Error while fetching top headlines");
@@ -80,7 +83,7 @@ public class HeadlinesViewModel extends ViewModel {
     }
 
     public void saveArticle(ArticleEntity articleEntity) {
-        compositeDisposable.add(NewsRepository.getInstance().saveArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
+        compositeDisposable.add(newsRepository.saveArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     Timber.d("Article saved");
@@ -92,7 +95,7 @@ public class HeadlinesViewModel extends ViewModel {
     }
 
     public void deleteArticle(String url) {
-        compositeDisposable.add(NewsRepository.getInstance().deleteSavedArticle(url)
+        compositeDisposable.add(newsRepository.deleteSavedArticle(url)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     Timber.d("Article deleted");

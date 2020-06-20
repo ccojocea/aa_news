@@ -15,28 +15,28 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
 
     @PrimaryKey
     @NonNull
-    protected String url;
+    protected final String url;
 
     @NonNull
-    protected Source source;
+    protected final Source source;
 
     @NonNull
-    protected String author;
+    protected final String author;
 
     @NonNull
-    protected String title;
+    protected final String title;
 
     @Nullable
-    protected String urlToImage;
+    protected final String urlToImage;
 
     @Nullable
-    protected String publishedAt;
+    protected final String publishedAt;
 
     @Nullable
-    protected String description;
+    protected final String description;
 
     @NonNull
-    protected String content;
+    protected final String content;
 
     //used locally for bookmarked articles
     protected boolean isSaved;
@@ -63,6 +63,7 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 this.content = Html.fromHtml(content, Html.FROM_HTML_MODE_LEGACY).toString();
             } else {
+                //noinspection deprecation
                 this.content = Html.fromHtml(content).toString();
             }
         } else {
@@ -144,11 +145,11 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
 
         @SerializedName("id")
         @Nullable
-        protected String id;
+        protected final String id;
 
         @SerializedName("name")
         @NonNull
-        protected String name;
+        protected final String name;
 
         public Source(@Nullable String id, @Nullable String name) {
             super();

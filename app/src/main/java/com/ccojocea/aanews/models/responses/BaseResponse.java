@@ -6,11 +6,12 @@ import androidx.annotation.Nullable;
 public class BaseResponse {
 
     @NonNull
-    public String status;
+    public final String status;
 
     @Nullable
-    public String code;
+    public final String code;
 
+    //TODO
     //apiKeyDisabled - Your API key has been disabled.
     //apiKeyExhausted - Your API key has no more requests available.
     //apiKeyInvalid - Your API key hasn't been entered correctly. Double check it and try again.
@@ -22,7 +23,7 @@ public class BaseResponse {
     //sourceDoesNotExist - You have requested a source which does not exist.
     //      unexpectedError - This shouldn't happen, and if it does then it's our fault, not yours. Try the request again shortly.
     @Nullable
-    public String message;
+    public final String message;
 
     BaseResponse(@NonNull String status, @Nullable String code, @Nullable String message) {
         this.status = status;
@@ -34,7 +35,7 @@ public class BaseResponse {
         OK("ok"),
         ERROR("error");
 
-        private String value;
+        private final String value;
 
         Status(String value) {
             this.value = value;
@@ -52,7 +53,7 @@ public class BaseResponse {
         TOO_MANY_REQUESTS("429"),
         SERVER_ERROR("500");
 
-        private String value;
+        private final String value;
 
         Code(String value) {
             this.value = value;

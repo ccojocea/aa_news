@@ -8,7 +8,7 @@ import timber.log.Timber;
 
 public class MainViewModel extends ViewModel {
 
-    private MutableLiveData<Integer> currentItemData;
+    private final MutableLiveData<Integer> currentItemData;
 
     public MainViewModel() {
         currentItemData = new MutableLiveData<>(0);
@@ -21,6 +21,11 @@ public class MainViewModel extends ViewModel {
     public void setCurrentItem(int currentItem) {
         Timber.d("Setting currentItem to: %d", currentItem);
         currentItemData.postValue(currentItem);
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
     }
 
 }

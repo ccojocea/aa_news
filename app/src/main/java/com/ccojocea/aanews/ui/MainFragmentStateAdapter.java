@@ -82,7 +82,7 @@ public class MainFragmentStateAdapter extends FragmentStateAdapter {
         BOOKMARKS(2),
         SEARCH(3);
 
-        public int value;
+        public final int value;
 
         FragmentType(int value) {
             this.value = value;

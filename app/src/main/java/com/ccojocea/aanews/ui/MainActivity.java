@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -16,8 +15,8 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.ccojocea.aanews.R;
-import com.ccojocea.aanews.ui.common.BaseActivity;
 import com.ccojocea.aanews.databinding.ActivityMainBinding;
+import com.ccojocea.aanews.ui.common.BaseActivity;
 import com.ccojocea.aanews.ui.common.HorizontalFlipTransformation;
 import com.ccojocea.aanews.ui.settings.SettingsActivity;
 import com.google.android.material.tabs.TabLayout;
@@ -89,27 +88,24 @@ public class MainActivity extends BaseActivity {
         int limit = (adapter.getItemCount() > 1 ? adapter.getItemCount() - 1 : ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);
         binding.viewPager2.setOffscreenPageLimit(limit);
 
-        final TabLayoutMediator tabLayoutMediator = new TabLayoutMediator(binding.tabLayout, binding.viewPager2, true, new TabLayoutMediator.TabConfigurationStrategy() {
-            @Override
-            public void onConfigureTab(@NonNull TabLayout.Tab tab, int position) {
-                switch (position) {
-                    case 0:
-                        tab.setText(getString(R.string.tab_my_news).toUpperCase());
-                        tab.setIcon(R.drawable.ic_home);
-                        break;
-                    case 1:
-                        tab.setText(getString(R.string.tab_headlines).toUpperCase());
-                        tab.setIcon(R.drawable.ic_headlines);
-                        break;
-                    case 2:
-                        tab.setText(getString(R.string.tab_bookmarks).toUpperCase());
-                        tab.setIcon(R.drawable.ic_bookmark);
-                        break;
-                    case 3:
-                        tab.setText(getString(R.string.tab_search).toUpperCase());
-                        tab.setIcon(R.drawable.ic_search);
-                        break;
-                }
+        final TabLayoutMediator tabLayoutMediator = new TabLayoutMediator(binding.tabLayout, binding.viewPager2, true, (tab, position) -> {
+            switch (position) {
+                case 0:
+                    tab.setText(getString(R.string.tab_my_news).toUpperCase());
+                    tab.setIcon(R.drawable.ic_home);
+                    break;
+                case 1:
+                    tab.setText(getString(R.string.tab_headlines).toUpperCase());
+                    tab.setIcon(R.drawable.ic_headlines);
+                    break;
+                case 2:
+                    tab.setText(getString(R.string.tab_bookmarks).toUpperCase());
+                    tab.setIcon(R.drawable.ic_bookmark);
+                    break;
+                case 3:
+                    tab.setText(getString(R.string.tab_search).toUpperCase());
+                    tab.setIcon(R.drawable.ic_search);
+                    break;
             }
         });
         binding.tabLayout.setTabMode(TabLayout.MODE_AUTO);

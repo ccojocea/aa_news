@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.ccojocea.aanews.common.App;
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
 
@@ -16,14 +17,18 @@ import timber.log.Timber;
 
 public class BookmarksViewModel extends ViewModel {
 
+    protected final NewsRepository newsRepository;
+
     private MutableLiveData<List<SavedArticleEntity>> articlesData;
-    private CompositeDisposable compositeDisposable;
+    private final CompositeDisposable compositeDisposable;
 
     public BookmarksViewModel() {
+        newsRepository = App.getAppComponent().newsRepository();
+
         articlesData = new MutableLiveData<>();
         compositeDisposable = new CompositeDisposable();
 
-        compositeDisposable.add(NewsRepository.getInstance().listenToBookmarks()
+        compositeDisposable.add(newsRepository.listenToBookmarks()
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(articleEntityList -> {
                     List<SavedArticleEntity> savedArticleEntityList = articleEntityList.stream()

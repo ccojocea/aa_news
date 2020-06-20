@@ -1,21 +1,19 @@
 package com.ccojocea.aanews.models.dto;
 
-import android.media.tv.TvView;
-
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 
 import timber.log.Timber;
 
 public class ArticleDto {
 
-    public String url;
-    public Source source;
-    public String author;
-    public String title;
-    public String description;
+    public final String url;
+    public final Source source;
+    public final String author;
+    public final String title;
+    public final String description;
     public String urlToImage;
-    public String publishedAt;
-    public String content;
+    public final String publishedAt;
+    public final String content;
 
     public ArticleDto(
             String url,

@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.RequestOptions;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.TimeUtil;
 import com.ccojocea.aanews.common.Utils;
@@ -316,7 +315,7 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
         notifyItemRangeInserted(lastIndex, newItems.size());
     }
 
-    public class NewsDiffUtilCallback extends DiffUtil.Callback {
+    public static class NewsDiffUtilCallback extends DiffUtil.Callback {
 
         List<ArticleEntity> newList;
         List<ArticleEntity> oldList;

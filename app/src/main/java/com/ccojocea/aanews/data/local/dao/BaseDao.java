@@ -6,7 +6,6 @@ import java.util.List;
 
 import io.reactivex.Completable;
 
-import static androidx.room.OnConflictStrategy.IGNORE;
 import static androidx.room.OnConflictStrategy.REPLACE;
 
 public interface BaseDao<T> {

@@ -1,4 +1,4 @@
-package com.ccojocea.aanews.data.remote;
+package com.ccojocea.aanews.data.remote.enums;
 
 /**
  * Used by TopHeadlines API
@@ -14,7 +14,7 @@ public enum NewsCategory {
     SPORTS("sports"),
     TECHNOLOGY("technology");
 
-    private String value;
+    private final String value;
 
     NewsCategory(String value) {
         this.value = value;

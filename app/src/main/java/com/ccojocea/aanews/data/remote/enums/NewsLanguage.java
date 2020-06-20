@@ -1,4 +1,4 @@
-package com.ccojocea.aanews.data.remote;
+package com.ccojocea.aanews.data.remote.enums;
 
 public enum NewsLanguage {
     ALL,

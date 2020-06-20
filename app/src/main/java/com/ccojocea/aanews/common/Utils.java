@@ -15,7 +15,7 @@ import com.google.gson.GsonBuilder;
 public class Utils {
 
     private static long lastClickTime;
-    private static long DELAY = 500;
+    private static final long DELAY = 500;
 
     public static boolean shouldPreventMisClick() {
         if (SystemClock.elapsedRealtime() - lastClickTime <= DELAY) {

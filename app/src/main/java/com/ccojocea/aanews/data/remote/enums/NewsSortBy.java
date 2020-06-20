@@ -1,11 +1,11 @@
-package com.ccojocea.aanews.data.remote;
+package com.ccojocea.aanews.data.remote.enums;
 
 public enum NewsSortBy {
     RELEVANCY("relevancy"),
     POPULARITY("popularity"),
     PUBLISHED_AT("publishedAt");
 
-    private String value;
+    private final String value;
 
     NewsSortBy(String value) {
         this.value = value;

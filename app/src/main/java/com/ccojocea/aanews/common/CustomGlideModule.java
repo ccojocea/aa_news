@@ -13,18 +13,20 @@ import com.bumptech.glide.module.AppGlideModule;
 
 import java.io.InputStream;
 
+import javax.inject.Inject;
+
 import okhttp3.OkHttpClient;
 
-//@GlideModule //TODO
+@GlideModule
 public class CustomGlideModule extends AppGlideModule {
 
-    //TODO Inject OkHttpClient
-    OkHttpClient client;
+    @Inject
+    protected OkHttpClient client;
 
     @Override
     public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
+        App.getAppComponent().inject(this);
         OkHttpUrlLoader.Factory factory = new OkHttpUrlLoader.Factory(client);
-
         glide.getRegistry().replace(GlideUrl.class, InputStream.class, factory);
     }
 

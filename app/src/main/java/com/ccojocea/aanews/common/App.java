@@ -24,15 +24,15 @@ public class App extends Application implements LifecycleObserver {
     private boolean inForeground;
     private Locale locale;
 
-//    @Component(modules = NetworkModule.class)
-//    public interface ApplicationComponent{}
+    private AppComponent applicationComponent;
 
     @Override
     public void onCreate() {
         super.onCreate();
         instance = this;
 
-//        ApplicationComponent applicationComponent = DaggerApp_ApplicationComponent.create();
+        // Reference to the application graph/component that is used across the whole app
+        applicationComponent = DaggerAppComponent.create();
 
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
 
@@ -53,6 +53,10 @@ public class App extends Application implements LifecycleObserver {
 
     public static App getApp() {
         return instance;
+    }
+
+    public static AppComponent getAppComponent() {
+        return instance.applicationComponent;
     }
 
     public boolean isInForeground() {
