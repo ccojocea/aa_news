@@ -8,11 +8,13 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.ccojocea.aanews.common.App;
 import com.ccojocea.aanews.data.local.dao.ArticleDao;
-import com.ccojocea.aanews.data.models.entity.ArticleEntity;
+import com.ccojocea.aanews.data.local.dao.SavedArticleDao;
+import com.ccojocea.aanews.models.entity.ArticleEntity;
+import com.ccojocea.aanews.models.entity.SavedArticleEntity;
 
 import timber.log.Timber;
 
-@Database(entities = {ArticleEntity.class}, version = 1)
+@Database(entities = {ArticleEntity.class, SavedArticleEntity.class}, version = 1)
 @TypeConverters(Converters.class)
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -52,5 +54,7 @@ public abstract class AppDatabase extends RoomDatabase {
     }
 
     public abstract ArticleDao articleDao();
+
+    public abstract SavedArticleDao savedArticleDao();
 
 }

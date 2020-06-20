@@ -1,19 +1,27 @@
 package com.ccojocea.aanews.data;
 
 import com.ccojocea.aanews.data.local.AppDatabase;
-import com.ccojocea.aanews.data.models.dto.ArticleDto;
-import com.ccojocea.aanews.data.models.entity.ArticleEntity;
+import com.ccojocea.aanews.data.local.dao.SavedArticleDao;
+import com.ccojocea.aanews.models.dto.ArticleDto;
+import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.data.remote.NewsWebService;
+import com.ccojocea.aanews.models.entity.SavedArticleEntity;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.SingleObserver;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 
 public class NewsRepository {
@@ -32,18 +40,101 @@ public class NewsRepository {
         return instance;
     }
 
-    public Single<List<ArticleEntity>> getTopHeadlines() {
-        return newsWebService.fetchTopHeadlines()
-                .map(list -> list.stream()
-                        .map(articleDto -> articleDto.toArticleEntity())
-                .collect(Collectors.toList()))
+    public Completable deleteSavedArticle(String url) {
+        return AppDatabase.getInstance().articleDao().updateArticle(url, false)
+                .andThen(AppDatabase.getInstance().savedArticleDao().deleteSavedArticle(url))
                 .subscribeOn(Schedulers.io());
     }
+
+    public Completable saveArticle(SavedArticleEntity entity) {
+        return AppDatabase.getInstance().articleDao().updateArticle(entity.getUrl(), true)
+                .andThen(AppDatabase.getInstance().savedArticleDao().insert(entity))
+                .subscribeOn(Schedulers.io());
+    }
+
+    //TODO Delete if not needed
+//    public Single<List<SavedArticleEntity>> getBookmarks() {
+//        return AppDatabase.getInstance().savedArticleDao().loadSavedArticles()
+//                .map(savedArticleEntities -> savedArticleEntities.stream()
+//                        .map(savedArticleEntity -> (ArticleEntity) savedArticleEntity)
+//                        .collect(Collectors.toList()))
+//                .subscribeOn(Schedulers.io());
+//    }
+
+    public Observable<List<ArticleEntity>> listenToBookmarks() {
+        return AppDatabase.getInstance().savedArticleDao().loadSavedArticles()
+                .map(savedArticleEntities -> savedArticleEntities.stream()
+                        .map(savedArticleEntity -> (ArticleEntity) savedArticleEntity)
+                        .collect(Collectors.toList()))
+                .subscribeOn(Schedulers.io());
+    }
+
+    public Single<List<ArticleEntity>> getTopHeadlines() {
+        Set<String> savedUrlSet = new HashSet<>();
+        Single<Set<String>> singleSet;
+//        Single<Set<String>> fff = AppDatabase.getInstance().savedArticleDao().singleLoadOfArticles()
+//                .map(savedArticleEntities -> savedArticleEntities.stream()
+//                        .map(savedArticleEntity -> {
+//                            savedUrlSet.add(savedArticleEntity.getUrl());
+//                            return savedArticleEntity.getUrl();
+//                        })
+//                        .collect(Collectors.toSet()))
+//                .subscribeOn(Schedulers.io());
+
+
+        //first get bookmarked items - this works
+//        Completable first = Completable.fromSingle(singleSet = AppDatabase.getInstance().savedArticleDao().singleLoadOfArticles()
+//                .map(savedArticleEntities -> {
+//                    return savedArticleEntities.stream().map(savedArticleEntity -> savedArticleEntity.getUrl()).collect(Collectors.toSet());
+//                })
+//                .subscribeOn(Schedulers.io()));
+//
+//        Single<List<ArticleEntity>> second =
+//                newsWebService.fetchTopHeadlines()
+//                        .subscribeOn(Schedulers.io())
+//                        .map(list -> list.stream()
+//                            .map(articleDto -> articleDto.toArticleEntity(singleSet.)
+//                            .collect(Collectors.toList()));
+//
+//        return first.andThen(second);
+
+//        //first get bookmarked items - this works
+        Completable first = Completable.fromSingle(AppDatabase.getInstance().savedArticleDao().singleLoadOfArticles()
+                .map(savedArticleEntities -> {
+                    List<String> strings = new ArrayList<>();
+                    savedArticleEntities.stream().forEach(savedArticleEntity ->
+                    {
+                        strings.add(savedArticleEntity.getUrl());
+                        savedUrlSet.add(savedArticleEntity.getUrl());
+                    });
+                    return strings;
+                })
+                .subscribeOn(Schedulers.io()));
+
+        //get top headlines from API and then check which ones were bookmarked
+        Single<List<ArticleEntity>> second =
+                newsWebService.fetchTopHeadlines()
+                        .subscribeOn(Schedulers.io())
+                        .map(list -> list.stream()
+                            .map(articleDto -> articleDto.toArticleEntity(savedUrlSet.contains(articleDto.url)))
+                            .collect(Collectors.toList()));
+
+        return first.andThen(second);
+    }
+
+    //This works but needs to check database
+//    public Single<List<ArticleEntity>> getTopHeadlines() {
+//        return newsWebService.fetchTopHeadlines()
+//                .map(list -> list.stream()
+//                        .map(articleDto -> articleDto.toArticleEntity())
+//                        .collect(Collectors.toList()))
+//                .subscribeOn(Schedulers.io());
+//    }
 
     public Single<List<ArticleEntity>> getPagedTopHeadlines(int page) {
         return newsWebService.fetchPagedTopHeadlines(page)
                 .map(list -> list.stream()
-                        .map(articleDto -> articleDto.toArticleEntity())
+                        .map(articleDto -> articleDto.toArticleEntity(false))
                         .collect(Collectors.toList()))
                 .subscribeOn(Schedulers.io());
     }
@@ -63,7 +154,7 @@ public class NewsRepository {
                 .flatMapCompletable((List<ArticleDto> articleDtos) -> {
                     // Convert models from DTO to Entity (can also be done using a for)
                     List<ArticleEntity> articleEntities = articleDtos.stream()
-                            .map(articleDto -> articleDto.toArticleEntity())
+                            .map(articleDto -> articleDto.toArticleEntity(false))
                             .collect(Collectors.toList());
                     // And save them into the database
                     return AppDatabase.getInstance().articleDao().insertAll(articleEntities);
@@ -128,12 +219,11 @@ public class NewsRepository {
         return intWrapper;
     }
 
-    private static Integer stringToInt (String s) {
+    private static Integer stringToInt(String s) {
         try {
             return Integer.parseInt(s);
         } catch (NumberFormatException nfe) {
             return null;
         }
     }
-
 }

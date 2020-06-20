@@ -2,10 +2,78 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "77cf7917198d5a8488b1d08011289a3e",
+    "identityHash": "4e7c3dd47aa49cd0e588846b4213aa34",
     "entities": [
       {
         "tableName": "ArticleEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`url` TEXT NOT NULL, `source` TEXT NOT NULL, `author` TEXT NOT NULL, `title` TEXT NOT NULL, `urlToImage` TEXT, `publishedAt` TEXT, `description` TEXT, `content` TEXT NOT NULL, `isSaved` INTEGER NOT NULL, PRIMARY KEY(`url`))",
+        "fields": [
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "author",
+            "columnName": "author",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "urlToImage",
+            "columnName": "urlToImage",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "publishedAt",
+            "columnName": "publishedAt",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSaved",
+            "columnName": "isSaved",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "url"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "SavedArticleEntity",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`url` TEXT NOT NULL, `source` TEXT NOT NULL, `author` TEXT NOT NULL, `title` TEXT NOT NULL, `urlToImage` TEXT, `publishedAt` TEXT, `description` TEXT, `content` TEXT NOT NULL, `isSaved` INTEGER NOT NULL, PRIMARY KEY(`url`))",
         "fields": [
           {
@@ -76,7 +144,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '77cf7917198d5a8488b1d08011289a3e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4e7c3dd47aa49cd0e588846b4213aa34')"
     ]
   }
 }

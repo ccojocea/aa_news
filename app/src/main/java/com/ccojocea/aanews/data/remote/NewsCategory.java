@@ -1,6 +1,11 @@
 package com.ccojocea.aanews.data.remote;
 
+/**
+ * Used by TopHeadlines API
+ * Not all available for any country
+ */
 public enum NewsCategory {
+    ALL(null),
     BUSINESS("business"),
     ENTERTAINMENT("entertainment"),
     GENERAL("general"),

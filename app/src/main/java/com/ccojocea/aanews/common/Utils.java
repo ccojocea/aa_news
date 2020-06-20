@@ -2,6 +2,7 @@ package com.ccojocea.aanews.common;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.SystemClock;
 
 import androidx.annotation.NonNull;
 
@@ -12,6 +13,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class Utils {
+
+    private static long lastClickTime;
+    private static long DELAY = 500;
+
+    public static boolean shouldPreventMisClick() {
+        if (SystemClock.elapsedRealtime() - lastClickTime <= DELAY) {
+            return true;
+        }
+        lastClickTime = SystemClock.elapsedRealtime();
+        return false;
+    }
 
     public static void shareLink(@NonNull Context context, @NonNull String articleUrl) {
         Intent intent = new Intent(Intent.ACTION_SEND);

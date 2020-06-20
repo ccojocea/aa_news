@@ -2,9 +2,8 @@ package com.ccojocea.aanews.data.remote;
 
 import com.ccojocea.aanews.BuildConfig;
 import com.ccojocea.aanews.common.App;
-import com.ccojocea.aanews.data.models.dto.ArticleDto;
-import com.ccojocea.aanews.data.models.responses.ArticlesResponse;
-import com.google.gson.JsonElement;
+import com.ccojocea.aanews.models.dto.ArticleDto;
+import com.ccojocea.aanews.models.responses.ArticlesResponse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -16,7 +15,6 @@ import okhttp3.ConnectionSpec;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.logging.HttpLoggingInterceptor;
-import retrofit2.Call;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -71,7 +69,7 @@ public class NewsWebService {
 
     // TODO Add params
     public Single<List<ArticleDto>> fetchTopHeadlines() {
-        return newsApi.fetchTopHeadlines(null, null, App.getApp().getLocale().getCountry())
+        return newsApi.fetchTopHeadlines(null, "sports", App.getApp().getLocale().getCountry())
                 .map(articlesResponse -> articlesResponse.articles);
     }
 

@@ -4,10 +4,11 @@ import androidx.room.Dao;
 import androidx.room.Query;
 import androidx.room.Transaction;
 
-import com.ccojocea.aanews.data.models.entity.ArticleEntity;
+import com.ccojocea.aanews.models.entity.ArticleEntity;
 
 import java.util.List;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 
 @Dao
@@ -28,6 +29,9 @@ public abstract class ArticleDao implements BaseDao<ArticleEntity>{
     }
 
     @Query("DELETE FROM ArticleEntity")
-    public abstract void deleteArticles();
+    public abstract int deleteArticles();
+
+    @Query("UPDATE ArticleEntity SET isSaved = :isSaved WHERE url LIKE :url")
+    public abstract Completable updateArticle(String url, boolean isSaved);
 
 }

@@ -1,5 +1,8 @@
 package com.ccojocea.aanews.data.remote;
 
+/**
+ * Used by TopHeadlines API
+ */
 public enum NewsCountry {
     AE,
     AR,

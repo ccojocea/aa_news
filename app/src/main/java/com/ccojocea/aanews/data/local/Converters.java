@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.room.TypeConverter;
 
 import com.ccojocea.aanews.common.Utils;
-import com.ccojocea.aanews.data.models.entity.ArticleEntity;
+import com.ccojocea.aanews.models.entity.ArticleEntity;
 
 public class Converters {
 
