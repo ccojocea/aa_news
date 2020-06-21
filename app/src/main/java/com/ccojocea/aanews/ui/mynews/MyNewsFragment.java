@@ -15,22 +15,26 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
+import com.ccojocea.aanews.ui.SharedViewModel;
 import com.ccojocea.aanews.ui.common.BaseFragment;
 import com.ccojocea.aanews.databinding.FragmentMyNewsBinding;
 import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
 import com.ccojocea.aanews.ui.common.VerticalItemDecoration;
 
+import timber.log.Timber;
+
 public class MyNewsFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, SharedRecyclerViewAdapter.NewsAdapterListener {
 
     private FragmentMyNewsBinding binding;
-    private NewsViewModel viewModel;
+    private MyNewsViewModel viewModel;
+    private SharedViewModel sharedViewModel;
     private SharedRecyclerViewAdapter adapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //init ViewModel - use requireActivity() so this is bound to the activity (otherwise it would be recreated on config changes)
-        viewModel = new ViewModelProvider(requireActivity()).get(NewsViewModel.class);
+        viewModel = new ViewModelProvider(requireActivity()).get(MyNewsViewModel.class);
+        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
     }
 
     @Nullable
@@ -44,8 +48,6 @@ public class MyNewsFragment extends BaseFragment implements SwipeRefreshLayout.O
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        setupLiveData();
-
         adapter = new SharedRecyclerViewAdapter();
         adapter.setAdapterListener(this);
         if (binding.recyclerView.getItemAnimator() != null) {
@@ -55,6 +57,15 @@ public class MyNewsFragment extends BaseFragment implements SwipeRefreshLayout.O
         binding.recyclerView.addItemDecoration(new VerticalItemDecoration());
         binding.recyclerView.setAdapter(adapter);
         binding.refreshLayout.setOnRefreshListener(this);
+
+        setupLiveData();
+
+        // add the SwipeCallback to the recyclerView.adapter
+        // this will be controlled through liveData/rxJava based on user's preference selection
+        // the ItemTouchHelper.Callback isItemViewSwipeEnabled() will return true/false based on the above
+        if (getContext() != null) {
+            adapter.setupSwipeCallback(binding.recyclerView, getContext());
+        }
     }
 
     private void setupLiveData() {
@@ -73,6 +84,12 @@ public class MyNewsFragment extends BaseFragment implements SwipeRefreshLayout.O
                     Toast.makeText(getContext(), R.string.error_please_try_again, Toast.LENGTH_LONG).show();
                 }
             }
+        });
+
+        // if viewPager swipe is enabled, disable item swipe on the recyclerView
+        sharedViewModel.getSwipeData().observe(getViewLifecycleOwner(), isViewPagerSwipeEnabled -> {
+            Timber.d("Preference - Swipe Data - My News: %s", isViewPagerSwipeEnabled);
+            adapter.setItemViewSwipeEnabled(!isViewPagerSwipeEnabled);
         });
     }
 
@@ -97,10 +114,10 @@ public class MyNewsFragment extends BaseFragment implements SwipeRefreshLayout.O
         if (shouldSave) {
             ArticleEntity articleEntity = adapter.getItem(position);
             if (articleEntity != null) {
-                viewModel.saveArticle(articleEntity);
+                viewModel.bookmarkArticle(articleEntity);
             }
         } else {
-            viewModel.deleteArticle(url);
+            viewModel.removeBookmarkedArticle(url);
         }
     }
 

@@ -1,5 +1,7 @@
 package com.ccojocea.aanews.ui.common;
 
+import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,12 +13,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.TimeUtil;
 import com.ccojocea.aanews.common.Utils;
+import com.ccojocea.aanews.data.NewsHelper;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.databinding.LayoutAddItemBinding;
 import com.ccojocea.aanews.databinding.LayoutDefaultNewsItemBinding;
@@ -25,8 +29,14 @@ import com.ccojocea.aanews.ui.webview.WebViewActivity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static androidx.recyclerview.widget.RecyclerView.NO_POSITION;
 
 public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+
+    private boolean isFixedType;
+    private boolean isItemViewSwipeEnabled;
 
     private static final int VIEW_TYPE_DEFAULT = 0;
     private static final int VIEW_TYPE_LARGE = 1;
@@ -60,6 +70,7 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
             case VIEW_TYPE_LARGE:
                 ArticleBindingInterface binding = ((ArticleBindingInterface) holder);
                 binding.getRoot().setOnClickListener(v -> {
+                    NewsHelper.getInstance().setArticleEntity(article);
                     Intent intent = new Intent(binding.getRoot().getContext(), WebViewActivity.class);
                     intent.putExtra(WebViewActivity.KEY_SOURCE_NAME, article.getSource().getName());
                     intent.putExtra(WebViewActivity.KEY_URL, article.getUrl());
@@ -72,23 +83,7 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
                 });
 
                 binding.getBookmark().setOnClickListener(v -> {
-                    if (Utils.shouldPreventMisClick()) {
-                        return;
-                    }
-                    //this part causes flickering and moving of some items if used on first items in the list and recycler is scrolled at position 0
-                    if (article.isSaved()) {
-                        article.setSaved(false);
-                        binding.getBookmark().setImageResource(R.drawable.ic_bookmark);
-                        if (listener != null) {
-                            listener.onBookmarkClicked(position, article.getUrl(), false);
-                        }
-                    } else {
-                        article.setSaved(true);
-                        binding.getBookmark().setImageResource(R.drawable.ic_bookmark_selected);
-                        if (listener != null) {
-                            listener.onBookmarkClicked(position, article.getUrl(), true);
-                        }
-                    }
+                    setBookmark(article, binding, position);
                     //TODO Call notifyItemChanged with position / payload
 //                    notifyItemChanged(position);
                     //TODO Test with DiffUtil
@@ -129,11 +124,19 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
     //TODO VIEW_TYPE_ADD
     @Override
     public int getItemViewType(int position) {
-        if (position % 5 == 0) {
-            return VIEW_TYPE_LARGE;
-        } else {
+        if (isFixedType) {
             return VIEW_TYPE_DEFAULT;
+        } else {
+            if (position % 5 == 0) {
+                return VIEW_TYPE_LARGE;
+            } else {
+                return VIEW_TYPE_DEFAULT;
+            }
         }
+    }
+
+    public void setFixedType(boolean isFixedType) {
+        this.isFixedType = isFixedType;
     }
 
     @Override
@@ -146,12 +149,73 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
         notifyDataSetChanged();
     }
 
+    public void setChildItems(@NonNull List<? extends ArticleEntity> list) {
+        this.items = new ArrayList<>(list);
+        notifyDataSetChanged();
+    }
+
     @Nullable
     public ArticleEntity getItem(int position) {
-        if (items.size() > position) {
+        if (position > NO_POSITION && items.size() > position) {
             return items.get(position);
         }
         return null;
+    }
+
+    public void setupSwipeCallback(RecyclerView recyclerView, Context context) {
+        SwipeCallback swipeCallback = new SwipeCallback(context) {
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                ArticleBindingInterface binding = ((ArticleBindingInterface) viewHolder);
+                final int position = viewHolder.getAdapterPosition();
+                ArticleEntity article = getItem(position);
+                if (article != null) {
+                    switch (direction) {
+                        case ItemTouchHelper.LEFT:
+                            Utils.shareLink(viewHolder.itemView.getContext(), getItem(position).getUrl());
+                            //TODO Is there a better solution to reset here?
+                            notifyItemChanged(viewHolder.getAdapterPosition());
+                            break;
+                        case ItemTouchHelper.RIGHT:
+                            setBookmark(article, binding, position);
+                            //not needed since it gets refreshed due to database update
+                            //notifyItemChanged(viewHolder.getAdapterPosition());
+                            break;
+                    }
+                }
+            }
+
+            @Override
+            public boolean isItemViewSwipeEnabled() {
+                return isItemViewSwipeEnabled;
+            }
+
+        };
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(swipeCallback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
+    }
+
+    public void setItemViewSwipeEnabled(boolean isItemViewSwipeEnabled) {
+        this.isItemViewSwipeEnabled = isItemViewSwipeEnabled;
+    }
+
+    private void setBookmark(@NonNull ArticleEntity article, @NonNull ArticleBindingInterface binding, int position) {
+        if (Utils.shouldPreventMisClick()) {
+            return;
+        }
+        if (article.isSaved()) {
+            article.setSaved(false);
+            binding.getBookmark().setImageResource(R.drawable.ic_bookmark);
+            if (listener != null) {
+                listener.onBookmarkClicked(position, article.getUrl(), false);
+            }
+        } else {
+            article.setSaved(true);
+            binding.getBookmark().setImageResource(R.drawable.ic_bookmark_selected);
+            if (listener != null) {
+                listener.onBookmarkClicked(position, article.getUrl(), true);
+            }
+        }
     }
 
     public static class DefaultItemViewHolder extends RecyclerView.ViewHolder implements ArticleBindingInterface {
@@ -267,7 +331,7 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
     }
 
-    private interface ArticleBindingInterface {
+    protected interface ArticleBindingInterface {
 
         View getRoot();
 

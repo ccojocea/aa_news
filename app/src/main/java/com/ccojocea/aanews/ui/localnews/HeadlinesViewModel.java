@@ -14,6 +14,7 @@ import java.util.List;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 public class HeadlinesViewModel extends ViewModel {
@@ -33,6 +34,29 @@ public class HeadlinesViewModel extends ViewModel {
         getTopHeadlines();
 //        getPagedTopHeadlines();
 //        headlinesPagedLiveData = new LivePagedListBuilder<>();
+
+        // update the list if there's a change in the bookmark database
+        compositeDisposable.add(newsRepository.listenToBookmarks()
+                //keep the work in background due to iterations, update with postValue
+                .observeOn(Schedulers.io())
+                .subscribe(savedArticles -> {
+                    List<ArticleEntity> headlineArticles = topHeadlinesLiveData.getValue();
+                    if (headlineArticles != null && headlineArticles.size() > 0) {
+                        for (ArticleEntity headlineArticle : headlineArticles) {
+                            for (ArticleEntity savedArticle : savedArticles) {
+                                if (savedArticle.getUrl().equals(headlineArticle.getUrl())) {
+                                    headlineArticle.setSaved(true);
+                                    break;
+                                } else {
+                                    headlineArticle.setSaved(false);
+                                }
+                            }
+                        }
+                        topHeadlinesLiveData.postValue(headlineArticles);
+                    }
+                }, throwable -> {
+                    Timber.e(throwable, "Error while fetching bookmarked articles:");
+                }));
     }
 
     public LiveData<List<ArticleEntity>> getTopHeadlinesLiveData() {
@@ -76,14 +100,8 @@ public class HeadlinesViewModel extends ViewModel {
         errorLiveData.setValue(false);
     }
 
-    @Override
-    protected void onCleared() {
-        super.onCleared();
-        compositeDisposable.dispose();
-    }
-
     public void saveArticle(ArticleEntity articleEntity) {
-        compositeDisposable.add(newsRepository.saveArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
+        compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     Timber.d("Article saved");
@@ -95,7 +113,7 @@ public class HeadlinesViewModel extends ViewModel {
     }
 
     public void deleteArticle(String url) {
-        compositeDisposable.add(newsRepository.deleteSavedArticle(url)
+        compositeDisposable.add(newsRepository.removeBookmarkedArticle(url)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     Timber.d("Article deleted");
@@ -104,6 +122,12 @@ public class HeadlinesViewModel extends ViewModel {
                     errorLiveData.setValue(true);
                 })
         );
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        compositeDisposable.dispose();
     }
 
 }

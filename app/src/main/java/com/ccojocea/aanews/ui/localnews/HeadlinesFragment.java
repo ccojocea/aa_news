@@ -15,22 +15,26 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
+import com.ccojocea.aanews.ui.SharedViewModel;
 import com.ccojocea.aanews.ui.common.BaseFragment;
 import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
 import com.ccojocea.aanews.ui.common.VerticalItemDecoration;
 import com.ccojocea.aanews.databinding.FragmentHeadlinesBinding;
 
+import timber.log.Timber;
+
 public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, SharedRecyclerViewAdapter.NewsAdapterListener {
 
     private FragmentHeadlinesBinding binding;
     private HeadlinesViewModel viewModel;
+    private SharedViewModel sharedViewModel;
     private SharedRecyclerViewAdapter adapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //init ViewModel - use requireActivity() so this is bound to the activity (otherwise it would be recreated on config changes)
         viewModel = new ViewModelProvider(requireActivity()).get(HeadlinesViewModel.class);
+        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
     }
 
     @Nullable
@@ -43,7 +47,6 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        setupLiveData();
 
         adapter = new SharedRecyclerViewAdapter();
         adapter.setAdapterListener(this);
@@ -54,6 +57,12 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
         binding.recyclerView.addItemDecoration(new VerticalItemDecoration());
         binding.recyclerView.setAdapter(adapter);
         binding.refreshLayout.setOnRefreshListener(this);
+
+        setupLiveData();
+
+        if (getContext() != null) {
+            adapter.setupSwipeCallback(binding.recyclerView, getContext());
+        }
     }
 
     @Override
@@ -84,6 +93,11 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
                     Toast.makeText(getContext(), R.string.error_please_try_again, Toast.LENGTH_LONG).show();
                 }
             }
+        });
+
+        sharedViewModel.getSwipeData().observe(getViewLifecycleOwner(), isViewPagerSwipeEnabled -> {
+            Timber.d("Preference - Swipe Data - Headlines");
+            adapter.setItemViewSwipeEnabled(!isViewPagerSwipeEnabled);
         });
     }
 

@@ -20,8 +20,12 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.lifecycle.ViewModel;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.ccojocea.aanews.R;
+import com.ccojocea.aanews.data.NewsHelper;
+import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.ui.common.BaseActivity;
 import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.databinding.ActivityWebviewBinding;
@@ -44,6 +48,8 @@ public class WebViewActivity extends BaseActivity {
     private String articleUrl;
     private boolean isSaved;
 
+    private WebViewModel viewModel;
+
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -51,6 +57,8 @@ public class WebViewActivity extends BaseActivity {
 
         binding = ActivityWebviewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        viewModel = new ViewModelProvider(this).get(WebViewModel.class);
 
         // enable javascript
         binding.webView.getSettings().setJavaScriptEnabled(true);
@@ -94,6 +102,8 @@ public class WebViewActivity extends BaseActivity {
         share = menu.getItem(0);
         bookmark = menu.getItem(1);
         if (share != null && bookmark != null) {
+            bookmark.setVisible(false);
+            share.setVisible(false);
             if (isSaved) {
                 bookmark.setIcon(R.drawable.ic_bookmark_selected);
             } else {
@@ -114,13 +124,14 @@ public class WebViewActivity extends BaseActivity {
                 finish();
                 return true;
             case R.id.action_bookmark:
-                //TODO Bookmark/Un-bookmark and toggle icon based on db success
                 if (isSaved) {
                     isSaved = false;
                     item.setIcon(R.drawable.ic_bookmark);
+                    viewModel.removeBookmarkedArticle();
                 } else {
                     isSaved = true;
                     item.setIcon(R.drawable.ic_bookmark_selected);
+                    viewModel.bookmarkArticle();
                 }
                 return true;
             case R.id.action_share:

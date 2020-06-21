@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.TimeUtil;
+import com.ccojocea.aanews.data.NewsHelper;
 import com.ccojocea.aanews.databinding.LayoutBookmarkNewsItemBinding;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
 import com.ccojocea.aanews.ui.webview.WebViewActivity;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static android.view.View.GONE;
 
-public class BookmarksRecyclerAdapter extends RecyclerView.Adapter<BookmarksRecyclerAdapter.BookmarksHolder> {
+//TODO No longer used
+public class BookmarksRecyclerAdapter_deprecated extends RecyclerView.Adapter<BookmarksRecyclerAdapter_deprecated.BookmarksHolder> {
 
     private List<SavedArticleEntity> items = new ArrayList<>();
 
@@ -37,6 +39,7 @@ public class BookmarksRecyclerAdapter extends RecyclerView.Adapter<BookmarksRecy
         holder.binding.bookmark.setVisibility(GONE);
 
         holder.binding.getRoot().setOnClickListener(v -> {
+            NewsHelper.getInstance().setArticleEntity(article);
             Intent intent = new Intent(holder.binding.getRoot().getContext(), WebViewActivity.class);
             intent.putExtra(WebViewActivity.KEY_SOURCE_NAME, article.getSource().getName());
             intent.putExtra(WebViewActivity.KEY_URL, article.getUrl());

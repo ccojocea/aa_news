@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.Menu;
@@ -12,6 +13,7 @@ import android.view.MenuItem;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.preference.PreferenceManager;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.ccojocea.aanews.R;
@@ -22,6 +24,8 @@ import com.ccojocea.aanews.ui.settings.SettingsActivity;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import timber.log.Timber;
+
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
 
@@ -29,7 +33,8 @@ public class MainActivity extends BaseActivity {
 
     private ActivityMainBinding binding;
     private MainFragmentStateAdapter adapter;
-    private MainViewModel viewModel;
+    private MainViewModel mainViewModel;
+    private SharedViewModel sharedViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,16 +46,11 @@ public class MainActivity extends BaseActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         setSupportActionBar(binding.toolbar);
-        setupTabs();
-        viewModel = new ViewModelProvider(this).get(MainViewModel.class);
 
-        viewModel.getCurrentItemData().observe(this, integer -> {
-            if (integer != null) {
-                if (integer != binding.viewPager2.getCurrentItem()) {
-                    binding.viewPager2.setCurrentItem(integer);
-                }
-            }
-        });
+        mainViewModel = new ViewModelProvider(this).get(MainViewModel.class);
+        sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
+
+        setupTabs();
     }
 
     @Override
@@ -84,7 +84,6 @@ public class MainActivity extends BaseActivity {
         adapter.addFragment(MainFragmentStateAdapter.FragmentType.SEARCH, null);
         binding.viewPager2.setPageTransformer(new HorizontalFlipTransformation());
         binding.viewPager2.setAdapter(adapter);
-//        binding.viewPager2.setUserInputEnabled(getSwipeSetting()); //TODO
         int limit = (adapter.getItemCount() > 1 ? adapter.getItemCount() - 1 : ViewPager2.OFFSCREEN_PAGE_LIMIT_DEFAULT);
         binding.viewPager2.setOffscreenPageLimit(limit);
 
@@ -121,6 +120,28 @@ public class MainActivity extends BaseActivity {
                 }
             }
         });
+
+        mainViewModel.getCurrentItemData().observe(this, integer -> {
+            if (integer != null) {
+                if (integer != binding.viewPager2.getCurrentItem()) {
+                    binding.viewPager2.setCurrentItem(integer);
+                }
+            }
+        });
+
+        setupSwipeBehaviour();
+    }
+
+    private void setupSwipeBehaviour() {
+        Timber.d("Swipe setupSwipeBehaviour");
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean isSwipeOn = preferences.getBoolean(getString(R.string.preference_key_swipe), false);
+
+        sharedViewModel.getSwipeData().observe(this, isSwipeOnUpdate -> {
+            Timber.d("Preference - Swipe Data - Main");
+            binding.viewPager2.setUserInputEnabled(isSwipeOnUpdate);
+        });
+        sharedViewModel.setInitialSwipe(isSwipeOn);
     }
 
     @Override
@@ -129,9 +150,14 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
     protected void onStop() {
         super.onStop();
-        viewModel.setCurrentItem(binding.viewPager2.getCurrentItem());
+        mainViewModel.setCurrentItem(binding.viewPager2.getCurrentItem());
     }
 
     private void setupDarkModeReceiver() {

@@ -18,12 +18,16 @@
     <string name="tab_search">Search</string>
 
     <!-- SETTINGS FRAGMENT -->
+    <string name="settings_swipe_off">Share/Bookmark articles</string>
+    <string name="settings_swipe_on">Swipe between bottom categories</string>
+    <string name="settings_swipe_title">Swipe behaviour</string>
     <string name="settings_title">Settings</string>
     <string name="settings_headline_ui_mode_selection">Choose your interface mode</string>
     <string name="settings_system_mode_display">Follow system settings</string>
     <string name="settings_light_mode_display">Light mode</string>
     <string name="settings_dark_mode_display">Dark mode</string>
     <string name="preference_key_ui_mode">key_pref_ui_mode</string>
+    <string name="preference_key_swipe">key_swipe</string>
 
     <!-- SETTINGS FRAGMENT - NEWS -->
     <string name="settings_news_technology">Technology</string>

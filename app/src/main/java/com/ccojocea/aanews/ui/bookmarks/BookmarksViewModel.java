@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.ccojocea.aanews.common.App;
 import com.ccojocea.aanews.data.NewsRepository;
+import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
 
 import java.util.List;
@@ -39,13 +40,32 @@ public class BookmarksViewModel extends ViewModel {
                     Timber.e(throwable, "Error while fetching bookmarked articles:");
                 })
         );
-
-        //TODO Delete if not needed
-//        compositeDisposable.add(NewsRepository.getInstance().getBookmarks())
     }
 
     public LiveData<List<SavedArticleEntity>> getArticleData() {
         return articlesData;
+    }
+
+    public void bookmarkArticle(ArticleEntity articleEntity) {
+        compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    Timber.d("Article saved");
+                }, throwable -> {
+                    Timber.e(throwable, "Error while saving article");
+                })
+        );
+    }
+
+    public void removeBookmarkedArticle(String url) {
+        compositeDisposable.add(newsRepository.removeBookmarkedArticle(url)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> {
+                    Timber.d("Article deleted");
+                }, throwable -> {
+                    Timber.e(throwable, "Error while deleting article");
+                })
+        );
     }
 
     @Override

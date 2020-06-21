@@ -4,9 +4,12 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import io.reactivex.disposables.CompositeDisposable;
 import timber.log.Timber;
 
 public class MainViewModel extends ViewModel {
+
+    private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     private final MutableLiveData<Integer> currentItemData;
 
@@ -26,6 +29,7 @@ public class MainViewModel extends ViewModel {
     @Override
     protected void onCleared() {
         super.onCleared();
+        compositeDisposable.clear();
     }
 
 }

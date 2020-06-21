@@ -21,6 +21,8 @@ import timber.log.Timber;
 @Module
 public class NetworkModule {
 
+    private static OkHttpClient CLIENT;
+
     private static final int TIMEOUT = 30; //seconds
 
     private static final String HEADER_X_API_KEY = "X-Api-Key";
@@ -42,33 +44,37 @@ public class NetworkModule {
     }
 
     @Provides
-    @Singleton //doesn't work
+    @Singleton //method gets called each time, hence the static reference
     OkHttpClient okHttpClient() {
         Timber.d("Dagger debug - okHttpClient()");
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        if (CLIENT == null) {
+            Timber.d("Dagger debug - okHttpClient() NEW");
+            OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
-        // Add an interceptor for reused headers
-        builder.addInterceptor(chain -> {
-            Request request = chain.request().newBuilder().addHeader(HEADER_X_API_KEY, NEWS_API_KEY).build();
-            return chain.proceed(request);
-        });
+            // Add an interceptor for reused headers
+            builder.addInterceptor(chain -> {
+                Request request = chain.request().newBuilder().addHeader(HEADER_X_API_KEY, NEWS_API_KEY).build();
+                return chain.proceed(request);
+            });
 
-        if (BuildConfig.DEBUG) {
-            // Prepare a logging interceptor to make sure the requests / responses are shown in logs
-            HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(s -> Timber.d(s));
-            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-            builder.addInterceptor(loggingInterceptor);
+            if (BuildConfig.DEBUG) {
+                // Prepare a logging interceptor to make sure the requests / responses are shown in logs
+                HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(s -> Timber.d(s));
+                loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+                builder.addInterceptor(loggingInterceptor);
 
-            //Setup proxy for Charles
-            //builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.100", 8888)));
+                //Setup proxy for Charles
+                //builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.100", 8888)));
+            }
+
+            builder.connectTimeout(TIMEOUT, TimeUnit.SECONDS);
+            builder.readTimeout(TIMEOUT, TimeUnit.SECONDS);
+            builder.writeTimeout(TIMEOUT, TimeUnit.SECONDS);
+            builder.connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT));
+
+            CLIENT = builder.build();
         }
-
-        builder.connectTimeout(TIMEOUT, TimeUnit.SECONDS);
-        builder.readTimeout(TIMEOUT, TimeUnit.SECONDS);
-        builder.writeTimeout(TIMEOUT, TimeUnit.SECONDS);
-        builder.connectionSpecs(Arrays.asList(ConnectionSpec.MODERN_TLS, ConnectionSpec.COMPATIBLE_TLS, ConnectionSpec.CLEARTEXT));
-
-        return builder.build();
+        return CLIENT;
     }
 
 }

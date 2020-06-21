@@ -5,18 +5,22 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.ccojocea.aanews.common.App;
+import com.ccojocea.aanews.data.NewsHelper;
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
+import com.ccojocea.aanews.ui.settings.PreferenceHelper;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
-public class NewsViewModel extends ViewModel {
+public class MyNewsViewModel extends ViewModel {
 
     protected final NewsRepository newsRepository;
 
@@ -24,7 +28,7 @@ public class NewsViewModel extends ViewModel {
     private final MutableLiveData<List<ArticleEntity>> articlesLiveData = new MutableLiveData<>(new ArrayList<>());
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    public NewsViewModel() {
+    public MyNewsViewModel() {
         newsRepository = App.getAppComponent().newsRepository();
         listenToDatabaseArticles();
         refreshData();
@@ -75,8 +79,8 @@ public class NewsViewModel extends ViewModel {
         );
     }
 
-    public void saveArticle(ArticleEntity articleEntity) {
-        compositeDisposable.add(newsRepository.saveArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
+    public void bookmarkArticle(ArticleEntity articleEntity) {
+        compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     Timber.d("Article saved");
@@ -87,8 +91,8 @@ public class NewsViewModel extends ViewModel {
         );
     }
 
-    public void deleteArticle(String url) {
-        compositeDisposable.add(newsRepository.deleteSavedArticle(url)
+    public void removeBookmarkedArticle(String url) {
+        compositeDisposable.add(newsRepository.removeBookmarkedArticle(url)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(() -> {
                     Timber.d("Article deleted");

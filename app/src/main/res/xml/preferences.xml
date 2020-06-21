@@ -1,13 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ListPreference
         android:defaultValue="@string/settings_system_mode_display"
         android:entries="@array/pref_ui_mode_entries"
         android:entryValues="@array/pref_ui_mode_values"
+        android:icon="@drawable/ic_settings_display"
         android:key="@string/preference_key_ui_mode"
         android:summary="Dark mode preferences"
-        android:icon="@drawable/ic_settings_display"
         android:title="Display settings" />
+
+    <SwitchPreference
+        android:defaultValue="true"
+        android:icon="@drawable/ic_swipe"
+        android:key="@string/preference_key_swipe"
+        android:summaryOn="@string/settings_swipe_on"
+        android:summaryOff="@string/settings_swipe_off"
+        android:title="@string/settings_swipe_title" />
 
 </PreferenceScreen>
