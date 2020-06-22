@@ -1,11 +1,15 @@
 package com.ccojocea.aanews.ui.common;
 
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.view.Gravity;
+import android.view.View;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -13,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
 import com.ccojocea.aanews.R;
+import com.ccojocea.aanews.common.Utils;
 
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
 import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
@@ -35,12 +40,28 @@ public abstract class BaseActivity extends AppCompatActivity {
             finish();
         } else {
             lastBackPress = SystemClock.elapsedRealtime();
-            Toast.makeText(this, R.string.back_to_exit, Toast.LENGTH_SHORT).show();
+            if (getRoot() != null) {
+                Utils.showSnackBar(getRoot(), getString(R.string.back_to_exit), Toast.LENGTH_SHORT, Gravity.CENTER_HORIZONTAL);
+            } else {
+                Toast.makeText(this, R.string.back_to_exit, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
+    public abstract View getRoot();
+
     public void onBackPressedOverride() {
         super.onBackPressed();
+    }
+
+    public void hideKeyboard() {
+        View view = getCurrentFocus();
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imm != null) {
+                imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+            }
+        }
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)

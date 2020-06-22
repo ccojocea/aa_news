@@ -1,6 +1,5 @@
 package com.ccojocea.aanews.ui.common;
 
-import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -21,21 +20,22 @@ import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.TimeUtil;
 import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.data.NewsHelper;
-import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.databinding.LayoutAddItemBinding;
 import com.ccojocea.aanews.databinding.LayoutDefaultNewsItemBinding;
 import com.ccojocea.aanews.databinding.LayoutLargeNewsItemBinding;
+import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.ui.webview.WebViewActivity;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static androidx.recyclerview.widget.RecyclerView.NO_POSITION;
 
 public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
 
-    private boolean isFixedType;
+    // used by Bookmarks (just default type of view)
+    private boolean isDefaultType;
+
     private boolean isItemViewSwipeEnabled;
 
     private static final int VIEW_TYPE_DEFAULT = 0;
@@ -124,7 +124,7 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
     //TODO VIEW_TYPE_ADD
     @Override
     public int getItemViewType(int position) {
-        if (isFixedType) {
+        if (isDefaultType) {
             return VIEW_TYPE_DEFAULT;
         } else {
             if (position % 5 == 0) {
@@ -135,8 +135,8 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
         }
     }
 
-    public void setFixedType(boolean isFixedType) {
-        this.isFixedType = isFixedType;
+    public void setDefaultType(boolean isDefaultType) {
+        this.isDefaultType = isDefaultType;
     }
 
     @Override

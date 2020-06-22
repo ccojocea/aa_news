@@ -47,15 +47,6 @@ public class NewsRepository {
                 .subscribeOn(Schedulers.io());
     }
 
-    //TODO Delete if not needed
-//    public Single<List<SavedArticleEntity>> getBookmarks() {
-//        return database.savedArticleDao().loadSavedArticles()
-//                .map(savedArticleEntities -> savedArticleEntities.stream()
-//                        .map(savedArticleEntity -> (ArticleEntity) savedArticleEntity)
-//                        .collect(Collectors.toList()))
-//                .subscribeOn(Schedulers.io());
-//    }
-
     public Observable<List<ArticleEntity>> listenToBookmarks() {
         return database.savedArticleDao().loadSavedArticles()
                 .map(savedArticleEntities -> savedArticleEntities.stream()
@@ -91,15 +82,33 @@ public class NewsRepository {
         return first.andThen(second);
     }
 
-    //This works but needs to check database
-//    public Single<List<ArticleEntity>> getTopHeadlines() {
-//        return newsWebService.fetchTopHeadlines()
-//                .map(list -> list.stream()
-//                        .map(articleDto -> articleDto.toArticleEntity())
-//                        .collect(Collectors.toList()))
-//                .subscribeOn(Schedulers.io());
-//    }
+    public Single<List<ArticleEntity>> searchArticles(String query, String language) {
+        Set<String> savedUrlSet = new HashSet<>();
 
+        //first get bookmarked items
+        Completable first = Completable.fromSingle(database.savedArticleDao().singleLoadOfArticles()
+                .map(savedArticleEntities -> {
+                    List<String> strings = new ArrayList<>();
+                    savedArticleEntities.forEach(savedArticleEntity ->
+                    {
+                        strings.add(savedArticleEntity.getUrl());
+                        savedUrlSet.add(savedArticleEntity.getUrl());
+                    });
+                    return strings;
+                })
+                .subscribeOn(Schedulers.io()));
+
+        Single<List<ArticleEntity>> second = newsWebService.fetchEverything(query, language)
+                .subscribeOn(Schedulers.io())
+                .map(articleDtos -> articleDtos.stream()
+                        .filter(articleDto -> articleDto.url != null)
+                        .map(articleDto -> articleDto.toArticleEntity(savedUrlSet.contains(articleDto.url)))
+                        .collect(Collectors.toList()));
+
+        return first.andThen(second);
+    }
+
+    //TODO Pagination
     public Single<List<ArticleEntity>> getPagedTopHeadlines(int page) {
         return newsWebService.fetchPagedTopHeadlines(page)
                 .map(list -> list.stream()

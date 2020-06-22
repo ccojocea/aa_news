@@ -18,6 +18,7 @@ public class SharedViewModel extends ViewModel {
 
     private CompositeDisposable compositeDisposable = new CompositeDisposable();
 
+    private final MutableLiveData<Integer> currentItemData = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> swipeData = new MutableLiveData<>();
 
     public SharedViewModel() {
@@ -32,8 +33,17 @@ public class SharedViewModel extends ViewModel {
                         .subscribe(swipeData::postValue));
     }
 
+    public LiveData<Integer> getCurrentItemData() {
+        return currentItemData;
+    }
+
     public LiveData<Boolean> getSwipeData() {
         return swipeData;
+    }
+
+    public void setCurrentItem(int currentItem) {
+        Timber.d("Setting currentItem to: %d", currentItem);
+        currentItemData.postValue(currentItem);
     }
 
     public void setInitialSwipe(boolean isSwipeOn) {

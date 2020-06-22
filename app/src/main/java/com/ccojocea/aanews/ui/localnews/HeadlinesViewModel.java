@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.ccojocea.aanews.common.App;
+import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.internal.Util;
 import timber.log.Timber;
 
 public class HeadlinesViewModel extends ViewModel {
@@ -23,7 +25,7 @@ public class HeadlinesViewModel extends ViewModel {
 
     private static final int PAGE_SIZE = 20;
 
-    private final MutableLiveData<Boolean> errorLiveData = new MutableLiveData<>(false);
+    private final MutableLiveData<String> errorLiveData = new MutableLiveData<>(null);
     private final MutableLiveData<List<ArticleEntity>> topHeadlinesLiveData = new MutableLiveData<>(new ArrayList<>());
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
@@ -63,8 +65,12 @@ public class HeadlinesViewModel extends ViewModel {
         return topHeadlinesLiveData;
     }
 
-    public LiveData<Boolean> getErrorLiveData() {
+    public LiveData<String> getErrorLiveData() {
         return errorLiveData;
+    }
+
+    public void resetError() {
+        errorLiveData.setValue(null);
     }
 
     public void getTopHeadlines() {
@@ -75,7 +81,7 @@ public class HeadlinesViewModel extends ViewModel {
                             topHeadlinesLiveData.setValue(articleEntities);
                         }, throwable -> {
                             Timber.e(throwable, "Error while fetching top headlines");
-                            errorLiveData.setValue(true);
+                            errorLiveData.setValue(Utils.getErrorMessage(throwable));
                         })
         );
     }
@@ -91,13 +97,9 @@ public class HeadlinesViewModel extends ViewModel {
                             topHeadlinesLiveData.setValue(currentList);
                         }, throwable -> {
                             Timber.e(throwable, "Error while fetching top headlines");
-                            errorLiveData.setValue(true);
+                            errorLiveData.setValue(Utils.getErrorMessage(throwable));
                         })
         );
-    }
-
-    public void resetError() {
-        errorLiveData.setValue(false);
     }
 
     public void saveArticle(ArticleEntity articleEntity) {
@@ -107,7 +109,7 @@ public class HeadlinesViewModel extends ViewModel {
                     Timber.d("Article saved");
                 }, throwable -> {
                     Timber.e(throwable, "Error while saving article");
-                    errorLiveData.setValue(true);
+                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
                 })
         );
     }
@@ -119,7 +121,7 @@ public class HeadlinesViewModel extends ViewModel {
                     Timber.d("Article deleted");
                 }, throwable -> {
                     Timber.e(throwable, "Error while deleting article");
-                    errorLiveData.setValue(true);
+                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
                 })
         );
     }

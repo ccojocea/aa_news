@@ -4,6 +4,11 @@
     <string name="app_name">AANews</string>
     <string name="back_to_exit">Press back again to exit</string>
 
+    <!-- ERRORS -->
+    <string name="no_internet">Please check your internet connection</string>
+    <string name="error_please_try_again">There was an error. Please try again</string>
+    <string name="error_code_description"><![CDATA[Error code: %d & description: %s]]></string>
+
     <!-- HEADLINES -->
     <string name="tab_headlines">Headlines</string>
     <string name="title_headlines">Local Headlines</string>
@@ -13,9 +18,14 @@
 
     <!-- BOOKMARKS -->
     <string name="tab_bookmarks">Bookmarks</string>
+    <string name="tractor_time">You have not saved any articles.\n\n\n\n\n\nHere\'s a tractor!</string>
+    <string name="share">Share</string>
+    <string name="bookmark">Bookmark</string>
+    <string name="share_article_title">Share article</string>
 
     <!-- SEARCH -->
     <string name="tab_search">Search</string>
+    <string name="search_description">Try searching for something</string>
 
     <!-- SETTINGS FRAGMENT -->
     <string name="settings_swipe_off">Share/Bookmark articles</string>
@@ -35,7 +45,6 @@
     <string name="settings_news_bitcoin">Bitcoin</string>
 
     <!--  WEBVIEW  -->
-    <string name="error_please_try_again">An error has occurred please try again.</string>
     <string name="ssl_error_not_yet_valid">The certificate is not yet valid.</string>
     <string name="ssl_error_mismatch">The certificate domain doesn\'t match.</string>
     <string name="ssl_error_expired">The server certificate has expired.</string>
@@ -44,10 +53,6 @@
     <string name="ssl_error_continue">\" Do you want to continue anyway?\"</string>
     <string name="ssl_button_continue">Continue</string>
     <string name="ssl_button_cancel">Cancel</string>
-    <string name="share">Share</string>
-    <string name="bookmark">Bookmark</string>
-    <string name="share_article_title">Share article</string>
-    <string name="error_code_description"><![CDATA[Error code: %d & description: %s]]></string>
 
     <string name="lorem_ipsum">\"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.\"</string>
 

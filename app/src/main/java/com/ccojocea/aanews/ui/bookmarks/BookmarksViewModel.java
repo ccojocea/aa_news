@@ -20,14 +20,11 @@ public class BookmarksViewModel extends ViewModel {
 
     protected final NewsRepository newsRepository;
 
-    private MutableLiveData<List<SavedArticleEntity>> articlesData;
-    private final CompositeDisposable compositeDisposable;
+    private final MutableLiveData<List<SavedArticleEntity>> articlesData = new MutableLiveData<>();
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     public BookmarksViewModel() {
         newsRepository = App.getAppComponent().newsRepository();
-
-        articlesData = new MutableLiveData<>();
-        compositeDisposable = new CompositeDisposable();
 
         compositeDisposable.add(newsRepository.listenToBookmarks()
                 .observeOn(AndroidSchedulers.mainThread())

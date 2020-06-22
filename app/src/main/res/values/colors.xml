@@ -2,7 +2,7 @@
 <resources>
     <color name="primaryColor">#CFCFCF</color>
     <color name="primaryLightColor">#BABABA</color>
-    <color name="primaryDarkColor">#918E8E</color>
+    <color name="primaryDarkColor">#BABABA</color>
 
     <color name="secondaryColor">#ef6c00</color>
     <color name="secondaryLightColor">#FF9630</color>

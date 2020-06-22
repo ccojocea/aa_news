@@ -2,10 +2,10 @@ package com.ccojocea.aanews.ui.localnews;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,12 +14,15 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ccojocea.aanews.R;
+import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
+import com.ccojocea.aanews.ui.MainActivity;
 import com.ccojocea.aanews.ui.SharedViewModel;
 import com.ccojocea.aanews.ui.common.BaseFragment;
 import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
 import com.ccojocea.aanews.ui.common.VerticalItemDecoration;
 import com.ccojocea.aanews.databinding.FragmentHeadlinesBinding;
+import com.google.android.material.snackbar.Snackbar;
 
 import timber.log.Timber;
 
@@ -80,17 +83,23 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
         viewModel.getTopHeadlinesLiveData().observe(getViewLifecycleOwner(), articleEntities -> {
             if (getContext() != null) {
                 binding.refreshLayout.setRefreshing(false);
-                adapter.setItems(articleEntities);
+                if (articleEntities.size() > 0) {
+                    adapter.setItems(articleEntities);
+                    binding.recyclerView.setVisibility(View.VISIBLE);
+                    binding.emptyView.setVisibility(View.GONE);
+                } else {
+                    binding.recyclerView.setVisibility(View.GONE);
+                    binding.emptyView.setVisibility(View.VISIBLE);
+                }
             }
         });
 
-        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), isError -> {
-            if (isError != null && isError) {
+        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), errorMessage -> {
+            if (errorMessage != null) {
                 binding.refreshLayout.setRefreshing(false);
                 viewModel.resetError();
-                //TODO
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), R.string.error_please_try_again, Toast.LENGTH_LONG).show();
+                    Utils.showSnackBar(((MainActivity)getContext()).getRoot(), errorMessage, Snackbar.LENGTH_LONG, Gravity.CENTER_HORIZONTAL);
                 }
             }
         });

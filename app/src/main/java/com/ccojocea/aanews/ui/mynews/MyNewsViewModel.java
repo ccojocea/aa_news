@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.ccojocea.aanews.common.App;
+import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.data.NewsHelper;
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
@@ -18,13 +19,14 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.internal.Util;
 import timber.log.Timber;
 
 public class MyNewsViewModel extends ViewModel {
 
     protected final NewsRepository newsRepository;
 
-    private final MutableLiveData<Boolean> errorLiveData = new MutableLiveData<>(false);
+    private final MutableLiveData<String> errorLiveData = new MutableLiveData<>(null);
     private final MutableLiveData<List<ArticleEntity>> articlesLiveData = new MutableLiveData<>(new ArrayList<>());
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
@@ -44,7 +46,7 @@ public class MyNewsViewModel extends ViewModel {
                 }, throwable -> {
                     // Handle the error
                     Timber.e(throwable, "Received error while fetching articles:");
-                    errorLiveData.setValue(true);
+                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
                 })
         );
     }
@@ -53,12 +55,12 @@ public class MyNewsViewModel extends ViewModel {
         return articlesLiveData;
     }
 
-    public LiveData<Boolean> getErrorLiveData() {
+    public LiveData<String> getErrorLiveData() {
         return errorLiveData;
     }
 
     public void resetError() {
-        errorLiveData.setValue(false);
+        errorLiveData.setValue(null);
     }
 
     @Override
@@ -74,7 +76,7 @@ public class MyNewsViewModel extends ViewModel {
                     Timber.d("Data fetch completed");
                 }, throwable -> {
                     Timber.e(throwable, "Received error while fetching articles:");
-                    errorLiveData.setValue(true);
+                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
                 })
         );
     }
@@ -86,7 +88,7 @@ public class MyNewsViewModel extends ViewModel {
                     Timber.d("Article saved");
                 }, throwable -> {
                     Timber.e(throwable, "Error while saving article");
-                    errorLiveData.setValue(true);
+                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
                 })
         );
     }
@@ -98,7 +100,7 @@ public class MyNewsViewModel extends ViewModel {
                     Timber.d("Article deleted");
                 }, throwable -> {
                     Timber.e(throwable, "Error while deleting article");
-                    errorLiveData.setValue(true);
+                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
                 })
         );
     }

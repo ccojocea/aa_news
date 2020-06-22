@@ -7,6 +7,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
+import android.util.TypedValue;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -17,11 +18,13 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 
+import java.lang.reflect.Type;
+
 import timber.log.Timber;
 
 public class SwipeCallback extends ItemTouchHelper.Callback {
 
-    private static float SWIPE_THRESHOLD = 1.0f;
+    private static float SWIPE_THRESHOLD = 0.7f;
 
     Context mContext;
 
@@ -44,8 +47,15 @@ public class SwipeCallback extends ItemTouchHelper.Callback {
         mClearPaint = new Paint();
         mClearPaint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
 
-        bookmarkBackgroundColor = context.getColor(R.color.primaryDarkColor);
-        shareBackgroundColor = context.getColor(R.color.primaryDarkColor);
+        TypedValue a = new TypedValue();
+        context.getTheme().resolveAttribute(android.R.attr.windowBackground, a, true);
+        if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
+            bookmarkBackgroundColor = a.data;
+            shareBackgroundColor = a.data;
+        } else {
+            bookmarkBackgroundColor = context.getColor(R.color.primaryDarkColor);
+            shareBackgroundColor = context.getColor(R.color.primaryDarkColor);
+        }
         shareDrawable = ContextCompat.getDrawable(mContext, R.drawable.ic_share_text);
         removeDrawable = ContextCompat.getDrawable(mContext, R.drawable.ic_remove_text);
         saveDrawable = ContextCompat.getDrawable(mContext, R.drawable.ic_save_text);

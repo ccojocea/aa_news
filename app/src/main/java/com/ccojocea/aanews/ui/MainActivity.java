@@ -9,6 +9,7 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -33,7 +34,6 @@ public class MainActivity extends BaseActivity {
 
     private ActivityMainBinding binding;
     private MainFragmentStateAdapter adapter;
-    private MainViewModel mainViewModel;
     private SharedViewModel sharedViewModel;
 
     @Override
@@ -47,7 +47,6 @@ public class MainActivity extends BaseActivity {
         setContentView(binding.getRoot());
         setSupportActionBar(binding.toolbar);
 
-        mainViewModel = new ViewModelProvider(this).get(MainViewModel.class);
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
 
         setupTabs();
@@ -121,7 +120,7 @@ public class MainActivity extends BaseActivity {
             }
         });
 
-        mainViewModel.getCurrentItemData().observe(this, integer -> {
+        sharedViewModel.getCurrentItemData().observe(this, integer -> {
             if (integer != null) {
                 if (integer != binding.viewPager2.getCurrentItem()) {
                     binding.viewPager2.setCurrentItem(integer);
@@ -145,19 +144,14 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
     protected void onStop() {
         super.onStop();
-        mainViewModel.setCurrentItem(binding.viewPager2.getCurrentItem());
+        sharedViewModel.setCurrentItem(binding.viewPager2.getCurrentItem());
+    }
+
+    @Override
+    public View getRoot() {
+        return binding.viewPagerLayout; //returning binding.getRoot() would place the popup on top of tabs
     }
 
     private void setupDarkModeReceiver() {

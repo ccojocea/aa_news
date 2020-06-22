@@ -2,6 +2,7 @@
   <dictionary name="ccojo">
     <words>
       <w>crashlytics</w>
+      <w>dtos</w>
       <w>gson</w>
       <w>okhttp</w>
       <w>roboelectric</w>

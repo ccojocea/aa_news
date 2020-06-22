@@ -15,11 +15,18 @@
         android:theme="@style/AppActionBar"
         app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight" />
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/view_pager2"
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/view_pager_layout"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:layout_height="0dp">
+
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/view_pager2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"

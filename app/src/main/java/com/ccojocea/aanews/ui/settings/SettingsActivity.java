@@ -3,6 +3,7 @@ package com.ccojocea.aanews.ui.settings;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -54,8 +55,8 @@ public class SettingsActivity extends BaseActivity {
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
+    public View getRoot() {
+        return binding.getRoot();
     }
 
     @Override

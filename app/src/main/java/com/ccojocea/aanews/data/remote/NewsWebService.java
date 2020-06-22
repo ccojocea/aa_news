@@ -55,6 +55,11 @@ public class NewsWebService {
                 .map(articlesResponse -> articlesResponse.articles);
     }
 
+    public Single<List<ArticleDto>> fetchEverything(String query, String language) {
+        return newsApi.fetchEverything(query, language)
+                .map(articlesResponse -> articlesResponse.articles);
+    }
+
     public Single<List<ArticleDto>> fetchPagedTopHeadlines(int page) {
         return newsApi.fetchPagedTopHeadlines(null, null, App.getApp().getLocale().getCountry(), page)
                 .map(articlesResponse -> articlesResponse.articles);

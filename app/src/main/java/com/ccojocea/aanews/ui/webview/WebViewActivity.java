@@ -8,6 +8,7 @@ import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -16,23 +17,19 @@ import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.ccojocea.aanews.R;
-import com.ccojocea.aanews.data.NewsHelper;
-import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.ui.common.BaseActivity;
 import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.databinding.ActivityWebviewBinding;
+import com.google.android.material.snackbar.Snackbar;
 
 import timber.log.Timber;
 
-//TODO Add Bookmark / Share options here on titlebar
 public class WebViewActivity extends BaseActivity {
 
     private ActivityWebviewBinding binding;
@@ -151,6 +148,11 @@ public class WebViewActivity extends BaseActivity {
         }
     }
 
+    @Override
+    public View getRoot() {
+        return binding.getRoot();
+    }
+
     public void allowUserInteraction() {
         if (!isFinishing() || !isDestroyed()) {
             //        binding.blockingView.setVisibility(View.GONE);
@@ -197,10 +199,12 @@ public class WebViewActivity extends BaseActivity {
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
             if (!WebViewActivity.this.isFinishing() || !WebViewActivity.this.isDestroyed()) {
-                Toast.makeText(WebViewActivity.this, String.format(getString(R.string.error_code_description), error.getErrorCode(), error.getDescription()), Toast.LENGTH_LONG).show();
+                Utils.showSnackBar(binding.getRoot(), String.format(getString(R.string.error_code_description), error.getErrorCode(), error.getDescription()), Snackbar.LENGTH_LONG, Gravity.CENTER_HORIZONTAL);
             }
             new Handler().postDelayed(WebViewActivity.this::allowUserInteraction, WEB_DELAY);
         }
+
+
 
         @Override
         public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {

@@ -19,9 +19,6 @@ import com.ccojocea.aanews.ui.common.BaseFragment;
 import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
 import com.ccojocea.aanews.ui.common.VerticalItemDecoration;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import timber.log.Timber;
 
 public class BookmarksFragment extends BaseFragment implements SharedRecyclerViewAdapter.NewsAdapterListener {
@@ -50,7 +47,7 @@ public class BookmarksFragment extends BaseFragment implements SharedRecyclerVie
         super.onViewCreated(view, savedInstanceState);
 
         adapter = new SharedRecyclerViewAdapter();
-        adapter.setFixedType(true);
+        adapter.setDefaultType(true);
         adapter.setAdapterListener(this);
         binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.recyclerView.addItemDecoration(new VerticalItemDecoration());
@@ -90,6 +87,7 @@ public class BookmarksFragment extends BaseFragment implements SharedRecyclerVie
 
     @Override
     public void onBookmarkClicked(int position, String url, boolean shouldSave) {
+        //TODO Cleanup and move entire logic to ViewModel (send article directly)
         if (shouldSave) {
             ArticleEntity articleEntity = adapter.getItem(position);
             if (articleEntity != null) {
