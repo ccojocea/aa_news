@@ -73,7 +73,7 @@ dependencies {
     implementation "androidx.preference:preference:$androidxPreference"
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:$androidxSwipeRefresh"
 
-    //Pagination
+    // paging
     implementation "androidx.paging:paging-runtime:$androidxPagingVersion"
     implementation "androidx.paging:paging-rxjava2:$androidxPagingVersion"
 

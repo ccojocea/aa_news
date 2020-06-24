@@ -134,6 +134,17 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
     }
 
     @Override
+    public boolean equals(@Nullable Object obj) {
+        if (obj == this) return true;
+
+        if (obj instanceof ArticleEntity) {
+            ArticleEntity articleEntity = (ArticleEntity) obj;
+            return articleEntity.getUrl().equals(this.getUrl());
+        }
+        return false;
+    }
+
+    @Override
     public int compareTo(ArticleEntity compare) {
         if (compare.url.equals(this.url) && compare.isSaved == this.isSaved) {
             return 0;

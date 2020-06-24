@@ -84,10 +84,6 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
                 binding.getBookmark().setOnClickListener(v -> {
                     setBookmark(article, binding, position);
-                    //TODO Call notifyItemChanged with position / payload
-//                    notifyItemChanged(position);
-                    //TODO Test with DiffUtil
-                    //TODO Test with RxJava
                 });
 
                 if (article.isSaved()) {
@@ -364,8 +360,10 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
     }
 
-    //TODO TEST & REMOVE
 
+
+
+    //TODO TEST
     public void updateNewItems(@NonNull List<ArticleEntity> newItems) {
         DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new NewsDiffUtilCallback(newItems, items));
         diffResult.dispatchUpdatesTo(this);

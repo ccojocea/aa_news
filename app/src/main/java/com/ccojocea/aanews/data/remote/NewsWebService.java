@@ -65,12 +65,6 @@ public class NewsWebService {
                 .map(articlesResponse -> articlesResponse.articles);
     }
 
-    //TODO PAGINATION
-    public Observable<List<ArticleDto>> executeNewsApi(int index) {
-        return newsApi.fetchListNews(App.getApp().getLocale().getCountry(), null)
-                .map(articlesResponse -> articlesResponse.articles);
-    }
-
     private interface NewsApi {
 
         @GET(API_ROUTE_EVERYTHING)
@@ -90,13 +84,6 @@ public class NewsWebService {
         Single<ArticlesResponse> fetchPagedTopHeadlines(
                 @Query(PARAM_Q) String query,
                 @Query(PARAM_HEADLINES_CATEGORY) String category,
-                @Query(PARAM_HEADLINES_COUNTRY) String country,
-                @Query(PARAM_PAGE) Integer page
-        );
-
-        //TODO PAGINATION
-        @GET(API_ROUTE_HEADLINES)
-        Observable<ArticlesResponse> fetchListNews(
                 @Query(PARAM_HEADLINES_COUNTRY) String country,
                 @Query(PARAM_PAGE) Integer page
         );

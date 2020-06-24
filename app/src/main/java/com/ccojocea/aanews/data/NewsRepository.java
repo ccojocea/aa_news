@@ -7,6 +7,7 @@ import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -50,8 +51,15 @@ public class NewsRepository {
     public Observable<List<ArticleEntity>> listenToBookmarks() {
         return database.savedArticleDao().loadSavedArticles()
                 .map(savedArticleEntities -> savedArticleEntities.stream()
+                        .sorted(new Comparator<ArticleEntity>() {
+                            @Override
+                            public int compare(ArticleEntity o1, ArticleEntity o2) {
+                                return o2.getPublishedAt().compareTo(o1.getPublishedAt());
+                            }
+                        })
                         .map(savedArticleEntity -> (ArticleEntity) savedArticleEntity)
                         .collect(Collectors.toList()))
+
                 .subscribeOn(Schedulers.io());
     }
 

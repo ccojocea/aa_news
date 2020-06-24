@@ -36,12 +36,6 @@ public class BookmarksViewModel extends ViewModel {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(articleEntityList -> {
                     List<SavedArticleEntity> savedArticleEntityList = articleEntityList.stream()
-                            .sorted(new Comparator<ArticleEntity>() {
-                                @Override
-                                public int compare(ArticleEntity o1, ArticleEntity o2) {
-                                    return o2.getPublishedAt().compareTo(o1.getPublishedAt());
-                                }
-                            })
                             .map(articleEntity -> SavedArticleEntity.fromArticleEntity(articleEntity))
                             .collect(Collectors.toList());
                     articlesData.setValue(savedArticleEntityList);
