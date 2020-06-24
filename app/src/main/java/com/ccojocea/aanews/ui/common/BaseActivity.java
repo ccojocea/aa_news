@@ -6,7 +6,6 @@ import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
-import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
@@ -41,7 +40,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         } else {
             lastBackPress = SystemClock.elapsedRealtime();
             if (getRoot() != null) {
-                Utils.showSnackBar(getRoot(), getString(R.string.back_to_exit), Toast.LENGTH_SHORT, Gravity.CENTER_HORIZONTAL);
+                Utils.showSnackBar(getRoot(), getString(R.string.back_to_exit), Toast.LENGTH_SHORT, false);
             } else {
                 Toast.makeText(this, R.string.back_to_exit, Toast.LENGTH_SHORT).show();
             }

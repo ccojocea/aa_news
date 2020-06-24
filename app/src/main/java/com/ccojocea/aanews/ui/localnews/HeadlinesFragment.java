@@ -2,7 +2,6 @@ package com.ccojocea.aanews.ui.localnews;
 
 import android.content.Context;
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +14,6 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.Utils;
-import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.ui.MainActivity;
 import com.ccojocea.aanews.ui.SharedViewModel;
 import com.ccojocea.aanews.ui.common.BaseFragment;
@@ -99,7 +97,7 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
                 binding.refreshLayout.setRefreshing(false);
                 viewModel.resetError();
                 if (getContext() != null) {
-                    Utils.showSnackBar(((MainActivity)getContext()).getRoot(), errorMessage, Snackbar.LENGTH_LONG, Gravity.CENTER_HORIZONTAL);
+                    Utils.showSnackBar(((MainActivity)getContext()).getRoot(), errorMessage, Snackbar.LENGTH_LONG, true);
                 }
             }
         });
@@ -107,6 +105,14 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
         sharedViewModel.getSwipeData().observe(getViewLifecycleOwner(), isViewPagerSwipeEnabled -> {
             Timber.d("Preference - Swipe Data - Headlines");
             adapter.setItemViewSwipeEnabled(!isViewPagerSwipeEnabled);
+        });
+
+        sharedViewModel.getBookmarkData().observe(getViewLifecycleOwner(), isSaved -> {
+            if (isSaved != null && getContext() != null) {
+                sharedViewModel.resetBookmarkData();
+                String message = isSaved ? getString(R.string.bookmark_saved) : getString(R.string.bookmark_removed);
+                Utils.showSnackBar(((MainActivity)getContext()).getRoot(), message, Snackbar.LENGTH_SHORT, false);
+            }
         });
     }
 
@@ -116,15 +122,8 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
     }
 
     @Override
-    public void onBookmarkClicked(int position, String url, boolean shouldSave) {
-        if (shouldSave) {
-            ArticleEntity articleEntity = adapter.getItem(position);
-            if (articleEntity != null) {
-                viewModel.saveArticle(articleEntity);
-            }
-        } else {
-            viewModel.deleteArticle(url);
-        }
+    public void onBookmarkClicked(int position, boolean shouldSave) {
+        sharedViewModel.onBookmarkClicked(adapter.getItem(position), shouldSave);
     }
 
 }

@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class TimeUtil {
 
@@ -16,15 +17,15 @@ public class TimeUtil {
     public static final String SERVER_TIME_FORMAT_1 = "yyyy-MM-dd";
     public static final String SERVER_TIME_FORMAT_2 = "yyyy-MM-dd'T'HH:mm:ss";
 
-    @SuppressLint("SimpleDateFormat")
+
     @NonNull
     public static CharSequence convertToReadableTime(@Nullable String serverTime) {
         if (serverTime != null) {
             SimpleDateFormat sdf;
             if (serverTime.length() > FORMAT_LENGTH) {
-                sdf = new SimpleDateFormat(SERVER_TIME_FORMAT_2);
+                sdf = new SimpleDateFormat(SERVER_TIME_FORMAT_2, Locale.getDefault());
             } else {
-                sdf = new SimpleDateFormat(SERVER_TIME_FORMAT_1);
+                sdf = new SimpleDateFormat(SERVER_TIME_FORMAT_1, Locale.getDefault());
             }
             try {
                 long time = sdf.parse(serverTime).getTime();

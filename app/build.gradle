@@ -28,6 +28,11 @@ android {
         }
     }
 
+    sourceSets {
+        // Adds exported schema location as test app assets.
+        androidTest.assets.srcDirs += files("$projectDir/schemas".toString())
+    }
+
     buildTypes {
         release {
             manifestPlaceholders = [crashlyticsCollectionEnabled:"true"]
@@ -131,6 +136,7 @@ dependencies {
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$testExtJunit"
     androidTestImplementation "androidx.test.espresso:espresso-core:$espressoVersion"
+    testImplementation "androidx.room:room-testing:$roomVersion"
 
     // mockito - better asserts
     // roboelectric - context/resource mocking

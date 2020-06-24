@@ -29,7 +29,7 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
     @Nullable
     protected final String urlToImage;
 
-    @Nullable
+    @NonNull
     protected final String publishedAt;
 
     @Nullable
@@ -58,7 +58,7 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
         this.title = title != null ? title : "";
         this.description = description != null ? !description.isEmpty() ? description : null : null;
         this.urlToImage = urlToImage;
-        this.publishedAt = publishedAt;
+        this.publishedAt = publishedAt != null ? publishedAt : "";
         if (content != null) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 this.content = Html.fromHtml(content, Html.FROM_HTML_MODE_LEGACY).toString();
@@ -97,7 +97,7 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
         return urlToImage;
     }
 
-    @Nullable
+    @NonNull
     public String getPublishedAt() {
         return publishedAt;
     }

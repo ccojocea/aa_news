@@ -3,6 +3,7 @@ package com.ccojocea.aanews.common;
 import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.TextView;
 
@@ -59,13 +60,26 @@ public class Utils {
                 .create();
     }
 
-    public static void showSnackBar(View root, String message, int length, int gravity) {
+    public static void showSnackBar(View root, String message, int length, boolean isError) {
+        showSnackBar(root, message, length, isError, null);
+    }
+
+    public static void showSnackBar(View root, String message, int length, boolean isError, View.OnClickListener onClickListener) {
         Snackbar snackbar = Snackbar.make(root, message, length);
-        snackbar.setBackgroundTint(ContextCompat.getColor(root.getContext(), R.color.secondaryColor));
+        if (isError) {
+            snackbar.setBackgroundTint(ContextCompat.getColor(root.getContext(), R.color.secondaryColor));
+        } else {
+            snackbar.setBackgroundTint(ContextCompat.getColor(root.getContext(), R.color.primaryDarkColor));
+        }
+        if (onClickListener != null) {
+            snackbar.setAction(R.string.undo_action, onClickListener);
+        } else {
+            View view = snackbar.getView();
+            TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
+            textView.setGravity(Gravity.CENTER_HORIZONTAL);
+            textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        }
         snackbar.show();
-        View view = snackbar.getView();
-        TextView textView = view.findViewById(com.google.android.material.R.id.snackbar_text);
-        textView.setGravity(gravity);
     }
 
     public static String getErrorMessage(Throwable throwable) {

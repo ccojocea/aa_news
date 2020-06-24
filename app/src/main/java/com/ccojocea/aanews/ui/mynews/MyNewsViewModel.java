@@ -27,7 +27,7 @@ public class MyNewsViewModel extends ViewModel {
     protected final NewsRepository newsRepository;
 
     private final MutableLiveData<String> errorLiveData = new MutableLiveData<>(null);
-    private final MutableLiveData<List<ArticleEntity>> articlesLiveData = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<List<ArticleEntity>> articlesLiveData = new MutableLiveData<>();
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     public MyNewsViewModel() {
@@ -76,30 +76,6 @@ public class MyNewsViewModel extends ViewModel {
                     Timber.d("Data fetch completed");
                 }, throwable -> {
                     Timber.e(throwable, "Received error while fetching articles:");
-                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                })
-        );
-    }
-
-    public void bookmarkArticle(ArticleEntity articleEntity) {
-        compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                    Timber.d("Article saved");
-                }, throwable -> {
-                    Timber.e(throwable, "Error while saving article");
-                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                })
-        );
-    }
-
-    public void removeBookmarkedArticle(String url) {
-        compositeDisposable.add(newsRepository.removeBookmarkedArticle(url)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                    Timber.d("Article deleted");
-                }, throwable -> {
-                    Timber.e(throwable, "Error while deleting article");
                     errorLiveData.setValue(Utils.getErrorMessage(throwable));
                 })
         );

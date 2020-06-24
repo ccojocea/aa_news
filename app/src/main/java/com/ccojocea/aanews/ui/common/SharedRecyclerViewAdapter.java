@@ -207,13 +207,13 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
             article.setSaved(false);
             binding.getBookmark().setImageResource(R.drawable.ic_bookmark);
             if (listener != null) {
-                listener.onBookmarkClicked(position, article.getUrl(), false);
+                listener.onBookmarkClicked(position, false);
             }
         } else {
             article.setSaved(true);
             binding.getBookmark().setImageResource(R.drawable.ic_bookmark_selected);
             if (listener != null) {
-                listener.onBookmarkClicked(position, article.getUrl(), true);
+                listener.onBookmarkClicked(position, true);
             }
         }
     }
@@ -360,7 +360,7 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
     public interface NewsAdapterListener {
 
-        void onBookmarkClicked(int position, String url, boolean shouldSave);
+        void onBookmarkClicked(int position, boolean shouldSave);
 
     }
 

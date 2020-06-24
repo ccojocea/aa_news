@@ -71,28 +71,6 @@ public class SearchViewModel extends ViewModel {
                 }));
     }
 
-    public void bookmarkArticle(ArticleEntity articleEntity) {
-        compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                    Timber.d("Article saved");
-                }, throwable -> {
-                    Timber.e(throwable, "Error while saving article");
-                })
-        );
-    }
-
-    public void removeBookmarkedArticle(String url) {
-        compositeDisposable.add(newsRepository.removeBookmarkedArticle(url)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                    Timber.d("Article deleted");
-                }, throwable -> {
-                    Timber.e(throwable, "Error while deleting article");
-                })
-        );
-    }
-
     public MutableLiveData<List<ArticleEntity>> getResultsData() {
         return resultsData;
     }

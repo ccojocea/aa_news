@@ -102,30 +102,6 @@ public class HeadlinesViewModel extends ViewModel {
         );
     }
 
-    public void saveArticle(ArticleEntity articleEntity) {
-        compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                    Timber.d("Article saved");
-                }, throwable -> {
-                    Timber.e(throwable, "Error while saving article");
-                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                })
-        );
-    }
-
-    public void deleteArticle(String url) {
-        compositeDisposable.add(newsRepository.removeBookmarkedArticle(url)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                    Timber.d("Article deleted");
-                }, throwable -> {
-                    Timber.e(throwable, "Error while deleting article");
-                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                })
-        );
-    }
-
     @Override
     protected void onCleared() {
         super.onCleared();

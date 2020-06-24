@@ -31,4 +31,5 @@ public class ExampleInstrumentedTest {
     public void click_test() {
         onView(withId(R.id.accelerate)).perform(click()); //TODO
     }
+
 }

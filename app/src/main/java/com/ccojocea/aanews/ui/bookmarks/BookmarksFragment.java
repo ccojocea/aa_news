@@ -12,12 +12,15 @@ import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.ccojocea.aanews.R;
+import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.databinding.FragmentBookmarksBinding;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
+import com.ccojocea.aanews.ui.MainActivity;
 import com.ccojocea.aanews.ui.SharedViewModel;
 import com.ccojocea.aanews.ui.common.BaseFragment;
 import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
 import com.ccojocea.aanews.ui.common.VerticalItemDecoration;
+import com.google.android.material.snackbar.Snackbar;
 
 import timber.log.Timber;
 
@@ -64,6 +67,14 @@ public class BookmarksFragment extends BaseFragment implements SharedRecyclerVie
             }
         });
 
+        viewModel.getBookmarkData().observe(getViewLifecycleOwner(), isSaved -> {
+            if (isSaved != null && getContext() != null && !isSaved) {
+                viewModel.resetBookmarkData();
+                View.OnClickListener listener = v -> viewModel.restoreBookmark();
+                Utils.showSnackBar(((MainActivity)getContext()).getRoot(), getString(R.string.bookmark_removed), Snackbar.LENGTH_SHORT, false, listener);
+            }
+        });
+
         sharedViewModel.getSwipeData().observe(getViewLifecycleOwner(), isSwipeEnabled -> {
             Timber.d("Preference - Swipe Data - Bookmarks");
             adapter.setItemViewSwipeEnabled(!isSwipeEnabled);
@@ -86,16 +97,8 @@ public class BookmarksFragment extends BaseFragment implements SharedRecyclerVie
     }
 
     @Override
-    public void onBookmarkClicked(int position, String url, boolean shouldSave) {
-        //TODO Cleanup and move entire logic to ViewModel (send article directly)
-        if (shouldSave) {
-            ArticleEntity articleEntity = adapter.getItem(position);
-            if (articleEntity != null) {
-                viewModel.bookmarkArticle(articleEntity);
-            }
-        } else {
-            viewModel.removeBookmarkedArticle(url);
-        }
+    public void onBookmarkClicked(int position, boolean shouldSave) {
+        viewModel.onBookmarkClicked(adapter.getItem(position), shouldSave);
     }
 
 }

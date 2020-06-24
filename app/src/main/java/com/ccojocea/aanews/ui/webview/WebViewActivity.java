@@ -8,7 +8,6 @@ import android.net.http.SslError;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -199,7 +198,12 @@ public class WebViewActivity extends BaseActivity {
         @Override
         public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
             if (!WebViewActivity.this.isFinishing() || !WebViewActivity.this.isDestroyed()) {
-                Utils.showSnackBar(binding.getRoot(), String.format(getString(R.string.error_code_description), error.getErrorCode(), error.getDescription()), Snackbar.LENGTH_LONG, Gravity.CENTER_HORIZONTAL);
+                Utils.showSnackBar(
+                        binding.getRoot(),
+                        String.format(getString(R.string.error_code_description),
+                                error.getErrorCode(),
+                                error.getDescription()),
+                        Snackbar.LENGTH_LONG, true);
             }
             new Handler().postDelayed(WebViewActivity.this::allowUserInteraction, WEB_DELAY);
         }

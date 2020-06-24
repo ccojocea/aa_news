@@ -14,7 +14,7 @@ public class SavedArticleEntity extends ArticleEntity {
             @Nullable String title,
             @Nullable String description,
             @Nullable String urlToImage,
-            @Nullable String publishedAt,
+            @NonNull String publishedAt,
             @Nullable String content) {
         super(url, source, author, title, description, urlToImage, publishedAt, content, true);
     }
