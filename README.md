@@ -1,5 +1,5 @@
 # aa_news
 
-Android Advanced - News
+Google Digital Workshop - Android Advanced - News
 
 MVVM, rxJava, retrofit, room and https://newsapi.org/
