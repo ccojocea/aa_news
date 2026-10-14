@@ -29,3 +29,12 @@
   **[] $VALUES;
   public *;
 }
+
+# models are (de)serialized by Gson through reflection (network responses and the Room type converter)
+-keep class com.ccojocea.aanews.models.** { *; }
+-keepattributes Signature, InnerClasses, EnclosingMethod
+
+# retrofit + rxJava2 call adapter (needed with R8 full mode, which is the default since AGP 8)
+-keep,allowobfuscation,allowshrinking class io.reactivex.Single
+-keep,allowobfuscation,allowshrinking class io.reactivex.Observable
+-keep,allowobfuscation,allowshrinking class io.reactivex.Completable

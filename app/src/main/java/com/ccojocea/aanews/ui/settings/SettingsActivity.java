@@ -38,6 +38,7 @@ public class SettingsActivity extends BaseActivity {
 
         binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        applySystemBarInsets(binding.getRoot(), binding.toolbar, binding.getRoot());
 
         setSupportActionBar(binding.toolbar);
         setTitle(R.string.settings_title);
@@ -46,12 +47,12 @@ public class SettingsActivity extends BaseActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
 
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.settings_container, new SettingsFragment())
-                .commit();
-
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        if (savedInstanceState == null) {
+            getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.settings_container, new SettingsFragment())
+                    .commit();
+        }
     }
 
     @Override
@@ -61,17 +62,11 @@ public class SettingsActivity extends BaseActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case android.R.id.home:
-                onBackPressed();
-                return true;
+        if (item.getItemId() == android.R.id.home) {
+            getOnBackPressedDispatcher().onBackPressed();
+            return true;
         }
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public void onBackPressed() {
-        super.onBackPressedOverride();
     }
 
     public static class SettingsFragment extends PreferenceFragmentCompat {

@@ -1,26 +1,23 @@
 package com.ccojocea.aanews.ui.common;
 
-import android.annotation.TargetApi;
 import android.content.Context;
-import android.content.res.Configuration;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.view.View;
-import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Toast;
 
+import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.Utils;
-
-import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM;
-import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
-import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
 
 public abstract class BaseActivity extends AppCompatActivity {
 
@@ -29,12 +26,28 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        // apps targeting SDK 35+ are always drawn edge-to-edge, enable it everywhere for a consistent look
+        EdgeToEdge.enable(this);
         super.onCreate(savedInstanceState);
-        setNavBarColor();
+
+        if (shouldConfirmExit()) {
+            getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+                @Override
+                public void handleOnBackPressed() {
+                    onExitRequested();
+                }
+            });
+        }
     }
 
-    @Override
-    public void onBackPressed() {
+    /**
+     * Return true to require a second back press (within {@link #EXIT_DELAY}) before closing the activity.
+     */
+    protected boolean shouldConfirmExit() {
+        return false;
+    }
+
+    private void onExitRequested() {
         if (SystemClock.elapsedRealtime() - lastBackPress <= EXIT_DELAY) {
             finish();
         } else {
@@ -49,8 +62,27 @@ public abstract class BaseActivity extends AppCompatActivity {
 
     public abstract View getRoot();
 
-    public void onBackPressedOverride() {
-        super.onBackPressed();
+    /**
+     * Keeps the content out of the system bars: the top view (usually the toolbar) is padded below the status bar,
+     * the bottom view is padded above the navigation bar and the root is padded horizontally (landscape, cutouts).
+     */
+    protected void applySystemBarInsets(@NonNull View root, @Nullable View topView, @Nullable View bottomView) {
+        final int rootLeft = root.getPaddingLeft();
+        final int rootRight = root.getPaddingRight();
+        final int topViewTop = topView != null ? topView.getPaddingTop() : 0;
+        final int bottomViewBottom = bottomView != null ? bottomView.getPaddingBottom() : 0;
+
+        ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
+            Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
+            v.setPadding(rootLeft + insets.left, v.getPaddingTop(), rootRight + insets.right, v.getPaddingBottom());
+            if (topView != null) {
+                topView.setPadding(topView.getPaddingLeft(), topViewTop + insets.top, topView.getPaddingRight(), topView.getPaddingBottom());
+            }
+            if (bottomView != null) {
+                bottomView.setPadding(bottomView.getPaddingLeft(), bottomView.getPaddingTop(), bottomView.getPaddingRight(), bottomViewBottom + insets.bottom);
+            }
+            return WindowInsetsCompat.CONSUMED;
+        });
     }
 
     public void hideKeyboard() {
@@ -59,31 +91,6 @@ public abstract class BaseActivity extends AppCompatActivity {
             InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
             if (imm != null) {
                 imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
-            }
-        }
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    private void setNavBarColor() {
-        Window window = getWindow();
-        if (window != null) {
-            switch (AppCompatDelegate.getDefaultNightMode()) {
-                case MODE_NIGHT_YES:
-                    window.setNavigationBarColor(getResources().getColor(android.R.color.transparent, getTheme()));
-                    break;
-                case MODE_NIGHT_NO:
-                    break;
-                case MODE_NIGHT_FOLLOW_SYSTEM:
-                    int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-                    switch (currentNightMode) {
-                        case Configuration.UI_MODE_NIGHT_NO:
-                        case Configuration.UI_MODE_NIGHT_UNDEFINED: //TODO Should be tested for older Android
-                            break;
-                        case Configuration.UI_MODE_NIGHT_YES:
-                            window.setNavigationBarColor(getResources().getColor(android.R.color.transparent, getTheme()));
-                            break;
-                    }
-                    break;
             }
         }
     }

@@ -59,7 +59,7 @@ public class SearchFragment extends BaseFragment implements SharedRecyclerViewAd
         super.onViewCreated(view, savedInstanceState);
 
         // disable SearchView underline highlight
-        View v = binding.searchView.findViewById(com.google.android.material.R.id.search_plate);
+        View v = binding.searchView.findViewById(androidx.appcompat.R.id.search_plate);
         //noinspection ConstantConditions
         v.setBackgroundColor(getResources().getColor(R.color.primaryDarkColor, getContext().getTheme()));
 

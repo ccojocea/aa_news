@@ -4,10 +4,6 @@ import android.app.Application;
 import android.content.SharedPreferences;
 
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.lifecycle.Lifecycle;
-import androidx.lifecycle.LifecycleObserver;
-import androidx.lifecycle.OnLifecycleEvent;
-import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.preference.PreferenceManager;
 
 import com.ccojocea.aanews.BuildConfig;
@@ -18,10 +14,9 @@ import java.util.Locale;
 
 import timber.log.Timber;
 
-public class App extends Application implements LifecycleObserver {
+public class App extends Application {
 
     private static App instance;
-    private boolean inForeground;
     private Locale locale;
 
     private AppComponent applicationComponent;
@@ -34,14 +29,15 @@ public class App extends Application implements LifecycleObserver {
         // Reference to the application graph/component that is used across the whole app
         applicationComponent = DaggerAppComponent.create();
 
-        ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
-
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
 
         //TODO
         locale = new Locale("ro", "RO");
+
+        // make sure the defaults declared in preferences.xml are available before the settings screen is opened
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         AppDatabase.initialize(this);
         setupDisplayMode();
@@ -59,10 +55,6 @@ public class App extends Application implements LifecycleObserver {
         return instance.applicationComponent;
     }
 
-    public boolean isInForeground() {
-        return inForeground;
-    }
-
     private void setupDisplayMode() {
         // get preferences
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -74,18 +66,6 @@ public class App extends Application implements LifecycleObserver {
         } else {
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
-    }
-
-    // app in foreground
-    @OnLifecycleEvent(Lifecycle.Event.ON_START)
-    private void onStart() {
-        inForeground = true;
-    }
-
-    // app in background
-    @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-    private void onStop() {
-        inForeground = false;
     }
 
 }

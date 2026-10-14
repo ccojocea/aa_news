@@ -1,96 +1,53 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
-buildscript {
-    ext {
-        // build dependencies
-        androidPluginVersion = '4.0.0'
-        googleServicesVersion = '4.3.3'
-
-        // app dependencies
-        androidxAppCompatVersion = '1.1.0'
-        androidxCardViewVersion = '1.0.0'
-        androidxConstraintLayoutVersion = '2.0.0-beta7'
-        androidxRecyclerViewVersion = '1.1.0'
-        androidxLifecycleVersion = '2.2.0'
-        androidxViewPager2Version = '1.0.0'
-        androidxPreference = '1.1.1'
-        androidxSwipeRefresh = '1.0.0'
-        androidxPagingVersion = '2.1.2'
-        materialVersion = '1.1.0'
-
-        // database
-        roomVersion = '2.2.5'
-
-        // network
-        okHttpVersion = '4.7.2'
-        gsonVersion = '2.8.6'
-        retrofitVersion = '2.9.0'
-
-        // firebase
-        firebaseCrashlyticsGradleVersion = '2.1.1'
-        firebasePerformanceGradleVersion = '1.3.1'
-        firebaseAnalyticsVersion = '17.4.3'
-        firebaseCrashlyticsVersion = '17.0.1'
-        firebasePerformanceVersion = '19.0.7'
-
-        // dexter
-        dexterVersion = '6.1.2'
-
-        // rxJava
-        rxJavaVersion = '2.2.19'
-        rxAndroidVersion = '2.1.1'
-
-        // logging
-        timberVersion = '4.7.1'
-
-        // images
-        glideVersion = '4.11.0'
-
-        // dagger2
-        daggerVersion = '2.28'
-
-        // test dependencies
-        runnerVersion = '1.0.1'
-        truthVersion = '1.0.1'
-        testExtJunit = '1.1.1'
-        uiAutomatorVersion = '2.2.0'
-        workVersion = '2.3.4'
-        coreTestingVersion = '2.1.0'
-        espressoVersion = '3.2.0'
-        junitVersion = '4.13'
-    }
-
-    repositories {
-        google()
-        jcenter()
-        mavenCentral()
-        maven {
-            url 'https://maven.google.com'
-        }
-
-    }
-
-    dependencies {
-        classpath "com.android.tools.build:gradle:${androidPluginVersion}"
-        classpath "com.google.gms:google-services:${googleServicesVersion}"
-
-        // firebase
-        classpath "com.google.firebase:perf-plugin:${firebasePerformanceGradleVersion}"
-        classpath "com.google.firebase:firebase-crashlytics-gradle:${firebaseCrashlyticsGradleVersion}"
-
-        // NOTE: Do not place your application dependencies here; they belong
-        // in the individual module build.gradle files
-    }
+plugins {
+    id 'com.android.application' version '8.13.0' apply false
+    id 'com.google.gms.google-services' version '4.4.2' apply false
+    id 'com.google.firebase.crashlytics' version '3.0.2' apply false
 }
 
-allprojects {
-    repositories {
-        google()
-        jcenter()
-        
-    }
-}
+ext {
+    // app dependencies
+    androidxAppCompatVersion = '1.7.0'
+    androidxActivityVersion = '1.9.3'
+    androidxCoreVersion = '1.13.1'
+    androidxConstraintLayoutVersion = '2.1.4'
+    androidxRecyclerViewVersion = '1.3.2'
+    androidxLifecycleVersion = '2.8.7'
+    androidxViewPager2Version = '1.1.0'
+    androidxPreference = '1.2.1'
+    androidxSwipeRefresh = '1.1.0'
+    materialVersion = '1.12.0'
 
-task clean(type: Delete) {
-    delete rootProject.buildDir
+    // database
+    roomVersion = '2.6.1'
+
+    // network
+    okHttpVersion = '4.12.0'
+    gsonVersion = '2.11.0'
+    retrofitVersion = '2.11.0'
+
+    // firebase
+    firebaseBomVersion = '34.11.0'
+
+    // rxJava
+    rxJavaVersion = '2.2.21'
+    rxAndroidVersion = '2.1.1'
+
+    // logging
+    timberVersion = '5.0.1'
+
+    // images
+    glideVersion = '4.16.0'
+
+    // dagger2
+    daggerVersion = '2.52'
+
+    // test dependencies
+    junitVersion = '4.13.2'
+    truthVersion = '1.4.4'
+    coreTestingVersion = '2.2.0'
+    testExtJunit = '1.2.1'
+    testRunnerVersion = '1.6.2'
+    espressoVersion = '3.6.1'
 }

@@ -1,18 +1,13 @@
 package com.ccojocea.aanews.ui;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatDelegate;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.preference.PreferenceManager;
 import androidx.viewpager2.widget.ViewPager2;
@@ -27,9 +22,6 @@ import com.google.android.material.tabs.TabLayoutMediator;
 
 import timber.log.Timber;
 
-import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO;
-import static androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES;
-
 public class MainActivity extends BaseActivity {
 
     private ActivityMainBinding binding;
@@ -40,11 +32,9 @@ public class MainActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // no longer needed as app will only follow system setting based on user preference
-        // setupDarkModeReceiver();
-
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        applySystemBarInsets(binding.getRoot(), binding.toolbar, binding.tabLayout);
         setSupportActionBar(binding.toolbar);
 
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);
@@ -60,19 +50,17 @@ public class MainActivity extends BaseActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_settings:
-                Intent intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+        if (item.getItemId() == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
+            return true;
         }
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
-    public void onConfigurationChanged(@NonNull Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
+    protected boolean shouldConfirmExit() {
+        return true;
     }
 
     private void setupTabs() {
@@ -152,32 +140,6 @@ public class MainActivity extends BaseActivity {
     @Override
     public View getRoot() {
         return binding.viewPagerLayout; //returning binding.getRoot() would place the popup on top of tabs
-    }
-
-    private void setupDarkModeReceiver() {
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
-        this.registerReceiver(new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                int currentNightMode = getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
-                switch (currentNightMode) {
-                    case Configuration.UI_MODE_NIGHT_NO:
-                        switch (AppCompatDelegate.getDefaultNightMode()) {
-                            case MODE_NIGHT_YES:
-                                AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_NO);
-                                break;
-                        }
-                        break;
-                    case Configuration.UI_MODE_NIGHT_YES:
-                        switch (AppCompatDelegate.getDefaultNightMode()) {
-                            case MODE_NIGHT_NO:
-                                AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_YES);
-                                break;
-                        }
-                }
-            }
-        }, filter);
     }
 
 }
