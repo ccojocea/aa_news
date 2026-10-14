@@ -1,7 +1,6 @@
 package com.ccojocea.aanews.ui.common;
 
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,7 +18,6 @@ import com.bumptech.glide.Glide;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.TimeUtil;
 import com.ccojocea.aanews.common.Utils;
-import com.ccojocea.aanews.data.NewsHelper;
 import com.ccojocea.aanews.databinding.LayoutAddItemBinding;
 import com.ccojocea.aanews.databinding.LayoutDefaultNewsItemBinding;
 import com.ccojocea.aanews.databinding.LayoutLargeNewsItemBinding;
@@ -70,12 +68,8 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
             case VIEW_TYPE_LARGE:
                 ArticleBindingInterface binding = ((ArticleBindingInterface) holder);
                 binding.getRoot().setOnClickListener(v -> {
-                    NewsHelper.getInstance().setArticleEntity(article);
-                    Intent intent = new Intent(binding.getRoot().getContext(), WebViewActivity.class);
-                    intent.putExtra(WebViewActivity.KEY_SOURCE_NAME, article.getSource().getName());
-                    intent.putExtra(WebViewActivity.KEY_URL, article.getUrl());
-                    intent.putExtra(WebViewActivity.KEY_SAVED, article.isSaved());
-                    binding.getRoot().getContext().startActivity(intent);
+                    Context context = binding.getRoot().getContext();
+                    context.startActivity(WebViewActivity.newIntent(context, article));
                 });
 
                 binding.getShare().setOnClickListener(v -> {

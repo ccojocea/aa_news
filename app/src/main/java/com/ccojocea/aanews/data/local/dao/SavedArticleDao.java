@@ -21,6 +21,9 @@ public abstract class SavedArticleDao implements BaseDao<SavedArticleEntity> {
     @Query("SELECT * FROM SavedArticleEntity")
     public abstract Single<List<SavedArticleEntity>> singleLoadOfArticles();
 
+    @Query("SELECT url FROM SavedArticleEntity")
+    public abstract Observable<List<String>> loadSavedUrls();
+
     @Query("DELETE FROM SavedArticleEntity WHERE url LIKE :url")
     public abstract Completable deleteSavedArticle(@NonNull String url);
 

@@ -63,6 +63,12 @@ public class NewsRepository {
                 .subscribeOn(Schedulers.io());
     }
 
+    public Observable<Set<String>> listenToBookmarkedUrls() {
+        return database.savedArticleDao().loadSavedUrls()
+                .map(urls -> (Set<String>) new HashSet<>(urls))
+                .subscribeOn(Schedulers.io());
+    }
+
     public Single<List<ArticleEntity>> getTopHeadlines() {
         Set<String> savedUrlSet = new HashSet<>();
 

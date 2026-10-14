@@ -10,8 +10,12 @@ import androidx.room.PrimaryKey;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+
 @Entity
-public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
+public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @PrimaryKey
     @NonNull
@@ -120,6 +124,20 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
         this.isSaved = isSaved;
     }
 
+    /**
+     * Returns a copy of this article with the given bookmark state, leaving this instance untouched.
+     * Lists handed to the UI should never be mutated in place, DiffUtil relies on comparing old and new items.
+     */
+    @NonNull
+    public ArticleEntity withSaved(boolean isSaved) {
+        if (this.isSaved == isSaved) {
+            return this;
+        }
+        ArticleEntity copy = (ArticleEntity) clone();
+        copy.isSaved = isSaved;
+        return copy;
+    }
+
     @NonNull
     @Override
     protected Object clone() {
@@ -145,6 +163,11 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
     }
 
     @Override
+    public int hashCode() {
+        return url.hashCode();
+    }
+
+    @Override
     public int compareTo(ArticleEntity compare) {
         if (compare.url.equals(this.url) && compare.isSaved == this.isSaved) {
             return 0;
@@ -152,7 +175,9 @@ public class ArticleEntity implements Comparable<ArticleEntity>, Cloneable {
         return 1;
     }
 
-    static public class Source implements Cloneable {
+    static public class Source implements Cloneable, Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         @SerializedName("id")
         @Nullable

@@ -1,9 +1,11 @@
 package com.ccojocea.aanews.ui.webview;
 
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.ccojocea.aanews.common.App;
-import com.ccojocea.aanews.data.NewsHelper;
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
@@ -14,38 +16,54 @@ import timber.log.Timber;
 
 public class WebViewModel extends ViewModel {
 
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    private NewsRepository newsRepository;
+    private final NewsRepository newsRepository;
+
+    private final MutableLiveData<Boolean> savedData = new MutableLiveData<>(false);
+
+    private ArticleEntity article;
 
     public WebViewModel() {
         newsRepository = App.getAppComponent().newsRepository();
     }
 
-    public void bookmarkArticle() {
-        ArticleEntity articleEntity = NewsHelper.getInstance().getArticleEntity();
-        if (articleEntity != null) {
-            compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(() -> {
-                        Timber.d("Article saved");
-                    }, throwable -> {
-                        Timber.e(throwable, "Error while saving article");
-                    })
-            );
+    public void setArticle(@NonNull ArticleEntity article) {
+        if (this.article != null) {
+            return;
         }
+        this.article = article;
+        savedData.setValue(article.isSaved());
+        compositeDisposable.add(newsRepository.listenToBookmarkedUrls()
+                .map(urls -> urls.contains(article.getUrl()))
+                .distinctUntilChanged()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(savedData::setValue,
+                        throwable -> Timber.e(throwable, "Error while listening to bookmarks"))
+        );
     }
 
-    public void removeBookmarkedArticle() {
-        ArticleEntity articleEntity = NewsHelper.getInstance().getArticleEntity();
-        if (articleEntity != null) {
-            compositeDisposable.add(newsRepository.removeBookmarkedArticle(articleEntity.getUrl())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(() -> {
-                        Timber.d("Article deleted");
-                    }, throwable -> {
-                        Timber.e(throwable, "Error while deleting article");
-                    })
+    public LiveData<Boolean> getSavedData() {
+        return savedData;
+    }
+
+    public boolean isSaved() {
+        return Boolean.TRUE.equals(savedData.getValue());
+    }
+
+    public void toggleBookmark() {
+        if (article == null) {
+            return;
+        }
+        if (isSaved()) {
+            compositeDisposable.add(newsRepository.removeBookmarkedArticle(article.getUrl())
+                    .subscribe(() -> Timber.d("Article deleted"),
+                            throwable -> Timber.e(throwable, "Error while deleting article"))
+            );
+        } else {
+            compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(article))
+                    .subscribe(() -> Timber.d("Article saved"),
+                            throwable -> Timber.e(throwable, "Error while saving article"))
             );
         }
     }

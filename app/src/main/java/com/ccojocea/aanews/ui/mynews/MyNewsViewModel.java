@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel;
 
 import com.ccojocea.aanews.common.App;
 import com.ccojocea.aanews.common.Utils;
-import com.ccojocea.aanews.data.NewsHelper;
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
