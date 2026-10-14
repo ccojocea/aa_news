@@ -10,21 +10,18 @@ import java.util.List;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 
 @Dao
 public abstract class SavedArticleDao implements BaseDao<SavedArticleEntity> {
 
-    @Query("SELECT * FROM SavedArticleEntity")
+    @Query("SELECT * FROM SavedArticleEntity ORDER BY publishedAt DESC")
     public abstract Observable<List<SavedArticleEntity>> loadSavedArticles();
-
-    @Query("SELECT * FROM SavedArticleEntity")
-    public abstract Single<List<SavedArticleEntity>> singleLoadOfArticles();
 
     @Query("SELECT url FROM SavedArticleEntity")
     public abstract Observable<List<String>> loadSavedUrls();
 
-    @Query("DELETE FROM SavedArticleEntity WHERE url LIKE :url")
+    // '=' instead of LIKE: '_' and '%' are wildcards for LIKE and are common in urls
+    @Query("DELETE FROM SavedArticleEntity WHERE url = :url")
     public abstract Completable deleteSavedArticle(@NonNull String url);
 
 }

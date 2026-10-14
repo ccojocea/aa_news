@@ -18,8 +18,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 
-import java.lang.reflect.Type;
-
 import timber.log.Timber;
 
 public class SwipeCallback extends ItemTouchHelper.Callback {
@@ -114,9 +112,9 @@ public class SwipeCallback extends ItemTouchHelper.Callback {
 
             if (dX > bookmarkIconMargin) {
                 if (recyclerView.getAdapter() instanceof SharedRecyclerViewAdapter) {
-                    ArticleEntity articleEntity = ((SharedRecyclerViewAdapter) recyclerView.getAdapter()).getItem(viewHolder.getAdapterPosition());
+                    // the article is not changed while swiping, its saved state only changes after the database update
+                    ArticleEntity articleEntity = ((SharedRecyclerViewAdapter) recyclerView.getAdapter()).getArticle(viewHolder.getBindingAdapterPosition());
                     if (articleEntity != null) {
-                        //TODO Find a way for the text not to change immediately (notifyItemChanged is being called)
                         if (articleEntity.isSaved()) {
                             Timber.d("Save/Remove dX = %s and showing: %s", dX, "Remove");
                             removeDrawable.setBounds(bookmarkIconLeft, bookmarkIconTop, bookmarkIconRight, bookmarkIconBottom);

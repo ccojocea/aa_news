@@ -70,12 +70,15 @@ public abstract class BaseActivity extends AppCompatActivity {
         final int rootLeft = root.getPaddingLeft();
         final int rootRight = root.getPaddingRight();
         final int topViewTop = topView != null ? topView.getPaddingTop() : 0;
+        final int topViewMinHeight = topView != null ? topView.getMinimumHeight() : 0;
         final int bottomViewBottom = bottomView != null ? bottomView.getPaddingBottom() : 0;
 
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             v.setPadding(rootLeft + insets.left, v.getPaddingTop(), rootRight + insets.right, v.getPaddingBottom());
             if (topView != null) {
+                // grow by the same amount, otherwise the padding is taken from the toolbar content
+                topView.setMinimumHeight(topViewMinHeight + insets.top);
                 topView.setPadding(topView.getPaddingLeft(), topViewTop + insets.top, topView.getPaddingRight(), topView.getPaddingBottom());
             }
             if (bottomView != null) {

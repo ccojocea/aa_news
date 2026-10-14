@@ -1,32 +1,33 @@
 package com.ccojocea.aanews.ui;
 
+import androidx.annotation.NonNull;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.ccojocea.aanews.common.App;
+import com.ccojocea.aanews.common.Event;
 import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.data.NewsRepository;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
 import com.ccojocea.aanews.ui.settings.PreferenceHelper;
 
+import io.reactivex.Completable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 // This viewModel is shared between activity and fragments
 public class SharedViewModel extends ViewModel {
 
     protected final NewsRepository newsRepository;
-    private PreferenceHelper preferenceHelper;
+    private final PreferenceHelper preferenceHelper;
 
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
+    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
-    private final MutableLiveData<String> errorLiveData = new MutableLiveData<>(null);
-    private final MutableLiveData<Boolean> bookmarkLiveData = new MutableLiveData<>(null);
-    private final MutableLiveData<Integer> currentItemData = new MutableLiveData<>(0);
+    private final MutableLiveData<Event<String>> errorLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Event<BookmarkChange>> bookmarkLiveData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> swipeData = new MutableLiveData<>();
 
     public SharedViewModel() {
@@ -36,65 +37,49 @@ public class SharedViewModel extends ViewModel {
     }
 
     private void listenToPreferenceChanges() {
+        // the current value is emitted right away, then every change made in the settings
         compositeDisposable.add(
-                preferenceHelper.listenToChanges()
-                        .subscribeOn(Schedulers.io())
-                        .subscribe(swipeData::postValue));
+                preferenceHelper.listenToViewPagerSwipe()
+                        .subscribe(swipeData::setValue,
+                                throwable -> Timber.e(throwable, "Error while listening to the swipe preference")));
     }
 
-    public LiveData<Integer> getCurrentItemData() {
-        return currentItemData;
-    }
-
+    /**
+     * True when swiping switches between tabs, false when swiping an article shares / bookmarks it.
+     */
     public LiveData<Boolean> getSwipeData() {
         return swipeData;
     }
 
-    public void setCurrentItem(int currentItem) {
-        Timber.d("Setting currentItem to: %d", currentItem);
-        currentItemData.postValue(currentItem);
+    public LiveData<Event<BookmarkChange>> getBookmarkData() {
+        return bookmarkLiveData;
     }
 
-    public void setInitialSwipe(boolean isSwipeOn) {
-        Timber.d("Preference Debug - setInitialSwipe()");
-        preferenceHelper.setNewSwipeValue(isSwipeOn);
-    }
-
-    private void bookmarkArticle(ArticleEntity articleEntity) {
-        compositeDisposable.add(newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                    bookmarkLiveData.setValue(true);
-                }, throwable -> {
-                    Timber.e(throwable, "Error while saving article");
-                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                })
-        );
-    }
-
-    private void removeBookmarkedArticle(String url) {
-        compositeDisposable.add(newsRepository.removeBookmarkedArticle(url)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(() -> {
-                    bookmarkLiveData.setValue(false);
-                }, throwable -> {
-                    Timber.e(throwable, "Error while deleting article");
-                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                })
-        );
-    }
-
-    public LiveData<Boolean> getBookmarkData() { return bookmarkLiveData; }
-
-    public LiveData<String> getErrorLiveData() {
+    public LiveData<Event<String>> getErrorLiveData() {
         return errorLiveData;
     }
 
-    public void resetError() {
-        errorLiveData.setValue(null);
+    public void onBookmarkClicked(@NonNull ArticleEntity articleEntity, boolean shouldSave) {
+        changeBookmark(articleEntity, shouldSave, true);
     }
 
-    public void resetBookmarkData() { bookmarkLiveData.setValue(null);}
+    public void undo(@NonNull BookmarkChange change) {
+        changeBookmark(change.article, !change.isSaved, false);
+    }
+
+    private void changeBookmark(@NonNull ArticleEntity articleEntity, boolean shouldSave, boolean canUndo) {
+        Completable change = shouldSave
+                ? newsRepository.bookmarkArticle(SavedArticleEntity.fromArticleEntity(articleEntity))
+                : newsRepository.removeBookmarkedArticle(articleEntity.getUrl());
+        compositeDisposable.add(change
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(() -> bookmarkLiveData.setValue(new Event<>(new BookmarkChange(articleEntity, shouldSave, canUndo))),
+                        throwable -> {
+                            Timber.e(throwable, "Error while changing bookmark");
+                            errorLiveData.setValue(new Event<>(Utils.getErrorMessage(throwable)));
+                        })
+        );
+    }
 
     @Override
     protected void onCleared() {
@@ -102,14 +87,19 @@ public class SharedViewModel extends ViewModel {
         compositeDisposable.clear();
     }
 
-    public void onBookmarkClicked(ArticleEntity articleEntity, boolean shouldSave) {
-        if (articleEntity != null) {
-            if (shouldSave) {
-                bookmarkArticle(articleEntity);
-            } else {
-                removeBookmarkedArticle(articleEntity.getUrl());
-            }
+    public static class BookmarkChange {
+
+        @NonNull
+        public final ArticleEntity article;
+        public final boolean isSaved;
+        public final boolean canUndo;
+
+        BookmarkChange(@NonNull ArticleEntity article, boolean isSaved, boolean canUndo) {
+            this.article = article;
+            this.isSaved = isSaved;
+            this.canUndo = canUndo;
         }
+
     }
 
 }

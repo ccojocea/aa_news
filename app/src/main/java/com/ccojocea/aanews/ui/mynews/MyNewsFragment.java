@@ -5,37 +5,40 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.Utils;
+import com.ccojocea.aanews.data.Topics;
+import com.ccojocea.aanews.databinding.DialogAddTopicBinding;
 import com.ccojocea.aanews.databinding.FragmentMyNewsBinding;
-import com.ccojocea.aanews.ui.MainActivity;
-import com.ccojocea.aanews.ui.SharedViewModel;
+import com.ccojocea.aanews.ui.common.BaseActivity;
 import com.ccojocea.aanews.ui.common.BaseFragment;
 import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
-import com.ccojocea.aanews.ui.common.VerticalItemDecoration;
+import com.google.android.material.chip.Chip;
 import com.google.android.material.snackbar.Snackbar;
 
-import timber.log.Timber;
+import java.util.List;
 
-public class MyNewsFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, SharedRecyclerViewAdapter.NewsAdapterListener {
+public class MyNewsFragment extends BaseFragment {
 
     private FragmentMyNewsBinding binding;
     private MyNewsViewModel viewModel;
-    private SharedViewModel sharedViewModel;
     private SharedRecyclerViewAdapter adapter;
+
+    private boolean isLoading;
+    private boolean isEmpty;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(MyNewsViewModel.class);
-        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
     }
 
     @Nullable
@@ -50,63 +53,110 @@ public class MyNewsFragment extends BaseFragment implements SwipeRefreshLayout.O
         super.onViewCreated(view, savedInstanceState);
 
         adapter = new SharedRecyclerViewAdapter();
-        adapter.setAdapterListener(this);
-        if (binding.recyclerView.getItemAnimator() != null) {
-            binding.recyclerView.getItemAnimator().setChangeDuration(0);
-        }
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerView.addItemDecoration(new VerticalItemDecoration());
-        binding.recyclerView.setAdapter(adapter);
-        binding.refreshLayout.setOnRefreshListener(this);
+        setupArticleList(binding.recyclerView, adapter);
+
+        binding.refreshLayout.setOnRefreshListener(viewModel::refreshData);
+        // the list is wrapped in a layout, tell the refresh layout when the list itself can still scroll up
+        binding.refreshLayout.setOnChildScrollUpCallback((parent, child) -> binding.recyclerView.canScrollVertically(-1));
 
         setupLiveData();
-
-        // add the SwipeCallback to the recyclerView.adapter
-        // this will be controlled through liveData/rxJava based on user's preference selection
-        // the ItemTouchHelper.Callback isItemViewSwipeEnabled() will return true/false based on the above
-        if (getContext() != null) {
-            adapter.setupSwipeCallback(binding.recyclerView, getContext());
-        }
     }
 
     private void setupLiveData() {
         viewModel.getArticlesLiveData().observe(getViewLifecycleOwner(), articleEntities -> {
-            if (getContext() != null) {
-                binding.refreshLayout.setRefreshing(false);
-                if (articleEntities.size() > 0) {
-                    adapter.setItems(articleEntities);
-                    binding.recyclerView.setVisibility(View.VISIBLE);
-                    binding.emptyView.setVisibility(View.GONE);
-                } else {
-                    binding.recyclerView.setVisibility(View.GONE);
-                    binding.emptyView.setVisibility(View.VISIBLE);
+            adapter.submitList(articleEntities);
+            isEmpty = articleEntities.isEmpty();
+            updateEmptyView();
+        });
+
+        viewModel.getTopicsLiveData().observe(getViewLifecycleOwner(), this::showTopics);
+
+        viewModel.getLoadingLiveData().observe(getViewLifecycleOwner(), loading -> {
+            isLoading = Boolean.TRUE.equals(loading);
+            binding.refreshLayout.setRefreshing(isLoading);
+            updateEmptyView();
+        });
+
+        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), this::showError);
+    }
+
+    private void updateEmptyView() {
+        binding.recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+        // the cache is empty on the first start, don't say there is no news while it is being loaded
+        binding.emptyView.setVisibility(isEmpty && !isLoading ? View.VISIBLE : View.GONE);
+        binding.emptyText.setText(viewModel.hasTopics() ? R.string.my_news_empty : R.string.my_news_no_topics);
+    }
+
+    private void showTopics(@NonNull List<String> topics) {
+        binding.topicChips.removeAllViews();
+        LayoutInflater inflater = getLayoutInflater();
+        for (String topic : topics) {
+            Chip chip = (Chip) inflater.inflate(R.layout.layout_topic_chip, binding.topicChips, false);
+            chip.setText(topic);
+            chip.setCloseIconVisible(true);
+            chip.setOnCloseIconClickListener(v -> {
+                viewModel.removeTopic(topic);
+                showMessage(getString(R.string.my_news_topic_removed, topic));
+            });
+            binding.topicChips.addView(chip);
+        }
+        if (topics.size() < Topics.MAX_TOPICS) {
+            Chip addChip = (Chip) inflater.inflate(R.layout.layout_topic_chip, binding.topicChips, false);
+            addChip.setText(R.string.my_news_add_topic);
+            addChip.setCloseIconVisible(false);
+            addChip.setOnClickListener(v -> showAddTopicDialog());
+            binding.topicChips.addView(addChip);
+        }
+    }
+
+    private void showAddTopicDialog() {
+        DialogAddTopicBinding dialogBinding = DialogAddTopicBinding.inflate(getLayoutInflater());
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setTitle(R.string.my_news_add_topic_title)
+                .setView(dialogBinding.getRoot())
+                .setPositiveButton(R.string.my_news_add, (d, which) -> addTopic(dialogBinding.topicInput.getText().toString()))
+                .setNegativeButton(R.string.my_news_cancel, null)
+                .create();
+        dialogBinding.topicInput.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                addTopic(v.getText().toString());
+                dialog.dismiss();
+                return true;
+            }
+            return false;
+        });
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+        }
+        dialogBinding.topicInput.requestFocus();
+        dialog.show();
+    }
+
+    private void addTopic(@NonNull String topic) {
+        switch (viewModel.addTopic(topic)) {
+            case INVALID:
+                showMessage(getString(R.string.my_news_topic_invalid, Topics.MAX_TOPIC_LENGTH));
+                break;
+            case DUPLICATE:
+                showMessage(getString(R.string.my_news_topic_duplicate, topic.trim()));
+                break;
+            case LIMIT_REACHED:
+                showMessage(getString(R.string.my_news_topic_limit, Topics.MAX_TOPICS));
+                break;
+            case ADDED:
+            default:
+                if (binding != null) {
+                    binding.recyclerView.scrollToPosition(0);
                 }
-            }
-        });
+                break;
+        }
+    }
 
-        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), errorMessage -> {
-            if (errorMessage != null) {
-                binding.refreshLayout.setRefreshing(false);
-                viewModel.resetError();
-                if (getContext() != null) {
-                    Utils.showSnackBar(((MainActivity) getContext()).getRoot(), errorMessage, Snackbar.LENGTH_LONG, true);
-                }
-            }
-        });
-
-        // if viewPager swipe is enabled, disable item swipe on the recyclerView
-        sharedViewModel.getSwipeData().observe(getViewLifecycleOwner(), isViewPagerSwipeEnabled -> {
-            Timber.d("Preference - Swipe Data - My News: %s", isViewPagerSwipeEnabled);
-            adapter.setItemViewSwipeEnabled(!isViewPagerSwipeEnabled);
-        });
-
-        sharedViewModel.getBookmarkData().observe(getViewLifecycleOwner(), isSaved -> {
-            if (isSaved != null && getContext() != null) {
-                sharedViewModel.resetBookmarkData();
-                String message = isSaved ? getString(R.string.bookmark_saved) : getString(R.string.bookmark_removed);
-                Utils.showSnackBar(((MainActivity) getContext()).getRoot(), message, Snackbar.LENGTH_SHORT, false);
-            }
-        });
+    private void showMessage(@NonNull String message) {
+        BaseActivity activity = getBaseActivity();
+        if (activity != null && activity.getRoot() != null) {
+            Utils.showSnackBar(activity.getRoot(), message, Snackbar.LENGTH_SHORT, false);
+        }
     }
 
     @Override
@@ -118,16 +168,6 @@ public class MyNewsFragment extends BaseFragment implements SwipeRefreshLayout.O
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-    }
-
-    @Override
-    public void onRefresh() {
-        viewModel.refreshData();
-    }
-
-    @Override
-    public void onBookmarkClicked(int position, boolean shouldSave) {
-        sharedViewModel.onBookmarkClicked(adapter.getItem(position), shouldSave);
     }
 
 }

@@ -8,13 +8,39 @@
     <string name="no_internet">Please check your internet connection</string>
     <string name="error_please_try_again">There was an error. Please try again</string>
     <string name="error_code_description"><![CDATA[Error code: %d & description: %s]]></string>
+    <string name="error_timeout">The connection timed out. Please try again</string>
+    <string name="error_api_key_missing">No NewsAPI key configured. Add newsApiKey to local.properties and rebuild the app</string>
+    <string name="error_api_key_invalid">The NewsAPI key is invalid or has been disabled</string>
+    <string name="error_rate_limited">Too many requests for now. Please try again later</string>
+    <string name="error_maximum_results">No more results are available</string>
+    <string name="error_server">The news service is having problems. Please try again later</string>
 
     <!-- HEADLINES -->
     <string name="tab_headlines">Headlines</string>
     <string name="title_headlines">Local Headlines</string>
+    <string name="headlines_empty">No headlines found for %1$s in this category.\nNewsAPI doesn\'t have headlines for every country, you can pick another one in the settings.</string>
+    <string name="category_all">All</string>
+    <string name="category_business">Business</string>
+    <string name="category_entertainment">Entertainment</string>
+    <string name="category_general">General</string>
+    <string name="category_health">Health</string>
+    <string name="category_science">Science</string>
+    <string name="category_sports">Sports</string>
+    <string name="category_technology">Technology</string>
 
     <!-- MY NEWS -->
     <string name="tab_my_news">My News</string>
+    <string name="my_news_add_topic">+ Add topic</string>
+    <string name="my_news_add_topic_title">Follow a topic</string>
+    <string name="my_news_add_topic_hint">e.g. Android, space, climate</string>
+    <string name="my_news_add">Follow</string>
+    <string name="my_news_cancel">Cancel</string>
+    <string name="my_news_no_topics">Add a topic to see the latest news about it</string>
+    <string name="my_news_empty">No recent news about your topics</string>
+    <string name="my_news_topic_invalid">Please enter a topic of up to %1$d characters</string>
+    <string name="my_news_topic_duplicate">You already follow \"%1$s\"</string>
+    <string name="my_news_topic_limit">You can follow up to %1$d topics</string>
+    <string name="my_news_topic_removed">Stopped following \"%1$s\"</string>
 
     <!-- BOOKMARKS -->
     <string name="tab_bookmarks">Bookmarks</string>
@@ -28,6 +54,10 @@
     <!-- SEARCH -->
     <string name="tab_search">Search</string>
     <string name="search_description">Try searching for something</string>
+    <string name="search_no_results">No articles found for \"%1$s\"</string>
+    <string name="search_sort_newest">Newest</string>
+    <string name="search_sort_relevancy">Most relevant</string>
+    <string name="search_sort_popularity">Most popular</string>
 
     <!-- SETTINGS FRAGMENT -->
     <string name="settings_swipe_off">Share/Bookmark articles</string>
@@ -40,11 +70,14 @@
     <string name="settings_dark_mode_display">Dark mode</string>
     <string name="preference_key_ui_mode">key_pref_ui_mode</string>
     <string name="preference_key_swipe">key_swipe</string>
+    <string name="preference_key_country">key_pref_country</string>
+    <string name="preference_key_language">key_pref_language</string>
 
     <!-- SETTINGS FRAGMENT - NEWS -->
-    <string name="settings_news_technology">Technology</string>
-    <string name="settings_news_travel">Travel</string>
-    <string name="settings_news_bitcoin">Bitcoin</string>
+    <string name="settings_news_category">News</string>
+    <string name="settings_country_title">Headlines country</string>
+    <string name="settings_language_title">Language of My News and Search</string>
+    <string name="settings_language_all">All languages</string>
 
     <!--  WEBVIEW  -->
     <string name="ssl_error_not_yet_valid">The certificate is not yet valid.</string>

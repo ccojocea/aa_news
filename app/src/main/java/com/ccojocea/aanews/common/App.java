@@ -10,14 +10,11 @@ import com.ccojocea.aanews.BuildConfig;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.data.local.AppDatabase;
 
-import java.util.Locale;
-
 import timber.log.Timber;
 
 public class App extends Application {
 
     private static App instance;
-    private Locale locale;
 
     private AppComponent applicationComponent;
 
@@ -33,18 +30,11 @@ public class App extends Application {
             Timber.plant(new Timber.DebugTree());
         }
 
-        //TODO
-        locale = new Locale("ro", "RO");
-
         // make sure the defaults declared in preferences.xml are available before the settings screen is opened
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
 
         AppDatabase.initialize(this);
         setupDisplayMode();
-    }
-
-    public Locale getLocale() {
-        return locale;
     }
 
     public static App getApp() {

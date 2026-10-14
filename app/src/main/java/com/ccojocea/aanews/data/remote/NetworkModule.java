@@ -51,7 +51,11 @@ public class NetworkModule {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
             // Add an interceptor for reused headers
+            // without a key the API answers with "apiKeyMissing", which is shown to the user
             builder.addInterceptor(chain -> {
+                if (BuildConfig.NEWS_API_KEY.isEmpty()) {
+                    return chain.proceed(chain.request());
+                }
                 Request request = chain.request().newBuilder().addHeader(HEADER_X_API_KEY, BuildConfig.NEWS_API_KEY).build();
                 return chain.proceed(request);
             });

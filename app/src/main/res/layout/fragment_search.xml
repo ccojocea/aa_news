@@ -21,6 +21,24 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/sort_chips"
+                android:saveEnabled="false"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingStart="@dimen/default_fragment_padding"
+                android:paddingEnd="@dimen/default_fragment_padding"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true" />
+
+        </HorizontalScrollView>
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -39,6 +57,7 @@
         app:layout_constraintTop_toBottomOf="@id/search_layout">
 
         <TextView
+            android:id="@+id/empty_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"

@@ -1,13 +1,19 @@
 package com.ccojocea.aanews.data;
 
+import androidx.annotation.NonNull;
+
 import com.ccojocea.aanews.data.local.AppDatabase;
 import com.ccojocea.aanews.data.remote.NewsWebService;
-import com.ccojocea.aanews.models.dto.ArticleDto;
+import com.ccojocea.aanews.data.remote.enums.NewsCategory;
+import com.ccojocea.aanews.data.remote.enums.NewsCountry;
+import com.ccojocea.aanews.data.remote.enums.NewsLanguage;
+import com.ccojocea.aanews.data.remote.enums.NewsSortBy;
+import com.ccojocea.aanews.models.ArticlePage;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.models.entity.SavedArticleEntity;
+import com.ccojocea.aanews.models.responses.ArticlesResponse;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,6 +31,9 @@ import timber.log.Timber;
 @Singleton
 public class NewsRepository {
 
+    // "My News" is cached and not paged, so it gets one bigger page
+    private static final int MY_NEWS_PAGE_SIZE = 50;
+
     private final AppDatabase database;
 
     @Inject
@@ -36,124 +45,94 @@ public class NewsRepository {
         Timber.d("Dagger debug - NewsRepository()");
     }
 
-    public Completable removeBookmarkedArticle(String url) {
-        return database.articleDao().updateArticle(url, false)
-                .andThen(database.savedArticleDao().deleteSavedArticle(url))
+    /* Bookmarks */
+
+    public Completable bookmarkArticle(@NonNull SavedArticleEntity entity) {
+        return database.savedArticleDao().insert(entity)
                 .subscribeOn(Schedulers.io());
     }
 
-    public Completable bookmarkArticle(SavedArticleEntity entity) {
-        return database.articleDao().updateArticle(entity.getUrl(), true)
-                .andThen(database.savedArticleDao().insert(entity))
+    public Completable removeBookmarkedArticle(@NonNull String url) {
+        return database.savedArticleDao().deleteSavedArticle(url)
                 .subscribeOn(Schedulers.io());
     }
 
-    public Observable<List<ArticleEntity>> listenToBookmarks() {
+    public Observable<List<SavedArticleEntity>> listenToBookmarks() {
         return database.savedArticleDao().loadSavedArticles()
-                .map(savedArticleEntities -> savedArticleEntities.stream()
-                        .sorted(new Comparator<ArticleEntity>() {
-                            @Override
-                            public int compare(ArticleEntity o1, ArticleEntity o2) {
-                                return o2.getPublishedAt().compareTo(o1.getPublishedAt());
-                            }
-                        })
-                        .map(savedArticleEntity -> (ArticleEntity) savedArticleEntity)
-                        .collect(Collectors.toList()))
-
                 .subscribeOn(Schedulers.io());
     }
 
+    /**
+     * Emits the urls of all bookmarked articles each time the bookmarks change.
+     * Lists from the API are matched against it to show which articles are saved.
+     */
     public Observable<Set<String>> listenToBookmarkedUrls() {
         return database.savedArticleDao().loadSavedUrls()
                 .map(urls -> (Set<String>) new HashSet<>(urls))
                 .subscribeOn(Schedulers.io());
     }
 
-    public Single<List<ArticleEntity>> getTopHeadlines() {
-        Set<String> savedUrlSet = new HashSet<>();
+    /* Headlines and search */
 
-        //first get bookmarked items
-        Completable first = Completable.fromSingle(database.savedArticleDao().singleLoadOfArticles()
-                .map(savedArticleEntities -> {
-                    List<String> strings = new ArrayList<>();
-                    savedArticleEntities.forEach(savedArticleEntity ->
-                    {
-                        strings.add(savedArticleEntity.getUrl());
-                        savedUrlSet.add(savedArticleEntity.getUrl());
-                    });
-                    return strings;
-                })
-                .subscribeOn(Schedulers.io()));
-
-        //get top headlines from API and then check which ones were bookmarked
-        Single<List<ArticleEntity>> second = newsWebService.fetchTopHeadlines()
-                .subscribeOn(Schedulers.io())
-                .map(list -> list.stream()
-                        .filter(articleDto -> articleDto.url != null)
-                        .map(articleDto -> articleDto.toArticleEntity(savedUrlSet.contains(articleDto.url)))
-                        .collect(Collectors.toList()));
-
-        return first.andThen(second);
-    }
-
-    public Single<List<ArticleEntity>> searchArticles(String query, String language) {
-        Set<String> savedUrlSet = new HashSet<>();
-
-        //first get bookmarked items
-        Completable first = Completable.fromSingle(database.savedArticleDao().singleLoadOfArticles()
-                .map(savedArticleEntities -> {
-                    List<String> strings = new ArrayList<>();
-                    savedArticleEntities.forEach(savedArticleEntity ->
-                    {
-                        strings.add(savedArticleEntity.getUrl());
-                        savedUrlSet.add(savedArticleEntity.getUrl());
-                    });
-                    return strings;
-                })
-                .subscribeOn(Schedulers.io()));
-
-        Single<List<ArticleEntity>> second = newsWebService.fetchEverything(query, language)
-                .subscribeOn(Schedulers.io())
-                .map(articleDtos -> articleDtos.stream()
-                        .filter(articleDto -> articleDto.url != null)
-                        .map(articleDto -> articleDto.toArticleEntity(savedUrlSet.contains(articleDto.url)))
-                        .collect(Collectors.toList()));
-
-        return first.andThen(second);
-    }
-
-    //TODO Pagination
-    public Single<List<ArticleEntity>> getPagedTopHeadlines(int page) {
-        return newsWebService.fetchPagedTopHeadlines(page)
-                .map(list -> list.stream()
-                        .map(articleDto -> articleDto.toArticleEntity(false))
-                        .collect(Collectors.toList()))
+    /**
+     * @param page 1-based page index
+     */
+    public Single<ArticlePage> getTopHeadlines(@NonNull NewsCountry country, @NonNull NewsCategory category, int page) {
+        return newsWebService.fetchTopHeadlines(country.getValue(), category.getValue(), page, NewsWebService.PAGE_SIZE)
+                .map(NewsRepository::toArticlePage)
                 .subscribeOn(Schedulers.io());
     }
 
-    //TODO From AA
-    public Observable<List<ArticleEntity>> listenToAllAndroidArticles() {
+    /**
+     * @param page 1-based page index
+     */
+    public Single<ArticlePage> searchArticles(@NonNull String query, @NonNull NewsLanguage language, @NonNull NewsSortBy sortBy, int page) {
+        return newsWebService.fetchEverything(query, language.getValue(), sortBy.getValue(), page, NewsWebService.PAGE_SIZE)
+                .map(NewsRepository::toArticlePage)
+                .subscribeOn(Schedulers.io());
+    }
+
+    /* My News */
+
+    /**
+     * Emits the cached "My News" articles, newest first, each time the cache changes.
+     */
+    public Observable<List<ArticleEntity>> listenToMyNews() {
         return database.articleDao().loadArticles()
-                // Make sure that the request above runs on a background thread, dedicated to I/O
                 .subscribeOn(Schedulers.io());
     }
 
-    //TODO From AA
-    public Completable fetchArticles() {
-        // First fetch the articles from the webservice
-        return newsWebService.fetchEverything("Android")
-                // ... then ...
-                .flatMapCompletable((List<ArticleDto> articleDtos) -> {
-                    // Convert models from DTO to Entity (can also be done using a for)
-                    List<ArticleEntity> articleEntities = articleDtos.stream()
-                            .filter(articleDto -> articleDto.url != null)
-                            .map(articleDto -> articleDto.toArticleEntity(false))
-                            .collect(Collectors.toList());
-                    // And save them into the database
-                    return database.articleDao().insertAll(articleEntities);
-                })
-                // Make sure that the request above runs on a background thread, dedicated to I/O
+    /**
+     * Fetches the newest articles about any of the topics and replaces the cache with them.
+     */
+    public Completable refreshMyNews(@NonNull List<String> topics, @NonNull NewsLanguage language) {
+        if (topics.isEmpty()) {
+            return Completable.fromAction(() -> database.articleDao().deleteArticles())
+                    .subscribeOn(Schedulers.io());
+        }
+        return newsWebService.fetchEverything(Topics.buildQuery(topics), language.getValue(), NewsSortBy.PUBLISHED_AT.getValue(), 1, MY_NEWS_PAGE_SIZE)
+                .map(NewsRepository::toArticles)
+                .flatMapCompletable(articles -> Completable.fromAction(() -> database.articleDao().replaceArticles(articles)))
                 .subscribeOn(Schedulers.io());
+    }
+
+    /* Mapping */
+
+    @NonNull
+    private static List<ArticleEntity> toArticles(@NonNull ArticlesResponse response) {
+        if (response.articles == null) {
+            return new ArrayList<>();
+        }
+        // the saved state is not known here, it is matched against the bookmarks by the view models
+        return response.articles.stream()
+                .filter(articleDto -> articleDto != null && articleDto.url != null)
+                .map(articleDto -> articleDto.toArticleEntity(false))
+                .collect(Collectors.toList());
+    }
+
+    @NonNull
+    private static ArticlePage toArticlePage(@NonNull ArticlesResponse response) {
+        return new ArticlePage(toArticles(response), response.totalResults);
     }
 
 }

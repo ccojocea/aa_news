@@ -1,111 +1,58 @@
 package com.ccojocea.aanews.ui.localnews;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+import androidx.annotation.NonNull;
 
-import com.ccojocea.aanews.common.App;
-import com.ccojocea.aanews.common.Utils;
-import com.ccojocea.aanews.data.NewsRepository;
-import com.ccojocea.aanews.models.entity.ArticleEntity;
-import com.ccojocea.aanews.models.entity.SavedArticleEntity;
+import com.ccojocea.aanews.data.remote.enums.NewsCategory;
+import com.ccojocea.aanews.data.remote.enums.NewsCountry;
+import com.ccojocea.aanews.models.ArticlePage;
+import com.ccojocea.aanews.ui.common.PagedArticlesViewModel;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.schedulers.Schedulers;
-import okhttp3.internal.Util;
+import io.reactivex.Single;
 import timber.log.Timber;
 
-public class HeadlinesViewModel extends ViewModel {
+public class HeadlinesViewModel extends PagedArticlesViewModel {
 
-    protected final NewsRepository newsRepository;
-
-    private static final int PAGE_SIZE = 20;
-
-    private final MutableLiveData<String> errorLiveData = new MutableLiveData<>(null);
-    private final MutableLiveData<List<ArticleEntity>> topHeadlinesLiveData = new MutableLiveData<>(new ArrayList<>());
-    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
-
-//    public final LiveData<PagedList<ArticleEntity>> headlinesPagedLiveData;
+    @NonNull
+    private NewsCountry country;
+    @NonNull
+    private NewsCategory category;
 
     public HeadlinesViewModel() {
-        newsRepository = App.getAppComponent().newsRepository();
-        getTopHeadlines();
-//        getPagedTopHeadlines();
-//        headlinesPagedLiveData = new LivePagedListBuilder<>();
+        country = preferenceHelper.getHeadlinesCountry();
+        category = preferenceHelper.getHeadlinesCategory();
 
-        // update the list if there's a change in the bookmark database
-        compositeDisposable.add(newsRepository.listenToBookmarks()
-                //keep the work in background due to iterations, update with postValue
-                .observeOn(Schedulers.io())
-                .subscribe(savedArticles -> {
-                    List<ArticleEntity> headlineArticles = topHeadlinesLiveData.getValue();
-                    if (headlineArticles != null && headlineArticles.size() > 0) {
-                        for (ArticleEntity headlineArticle : headlineArticles) {
-                            for (ArticleEntity savedArticle : savedArticles) {
-                                if (savedArticle.getUrl().equals(headlineArticle.getUrl())) {
-                                    headlineArticle.setSaved(true);
-                                    break;
-                                } else {
-                                    headlineArticle.setSaved(false);
-                                }
-                            }
-                        }
-                        topHeadlinesLiveData.postValue(headlineArticles);
-                    }
-                }, throwable -> {
-                    Timber.e(throwable, "Error while fetching bookmarked articles:");
-                }));
-    }
-
-    public LiveData<List<ArticleEntity>> getTopHeadlinesLiveData() {
-        return topHeadlinesLiveData;
-    }
-
-    public LiveData<String> getErrorLiveData() {
-        return errorLiveData;
-    }
-
-    public void resetError() {
-        errorLiveData.setValue(null);
-    }
-
-    public void getTopHeadlines() {
-        compositeDisposable.add(
-                newsRepository.getTopHeadlines()
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(articleEntities -> {
-                            topHeadlinesLiveData.setValue(articleEntities);
-                        }, throwable -> {
-                            Timber.e(throwable, "Error while fetching top headlines");
-                            errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                        })
+        // emits the current country right away (first load) and again when it is changed in the settings
+        compositeDisposable.add(preferenceHelper.listenToHeadlinesCountry()
+                .subscribe(newCountry -> {
+                    country = newCountry;
+                    reload();
+                }, throwable -> Timber.e(throwable, "Error while listening to the country preference"))
         );
     }
 
-    private void getPagedTopHeadlines() {
-        compositeDisposable.add(
-                newsRepository
-                        .getPagedTopHeadlines(PAGE_SIZE)
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(articleEntities -> {
-                            List<ArticleEntity> currentList = topHeadlinesLiveData.getValue();
-                            if (currentList != null) currentList.addAll(articleEntities);
-                            topHeadlinesLiveData.setValue(currentList);
-                        }, throwable -> {
-                            Timber.e(throwable, "Error while fetching top headlines");
-                            errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                        })
-        );
+    @NonNull
+    public NewsCountry getCountry() {
+        return country;
     }
 
+    @NonNull
+    public NewsCategory getCategory() {
+        return category;
+    }
+
+    public void setCategory(@NonNull NewsCategory newCategory) {
+        if (newCategory == category) {
+            return;
+        }
+        category = newCategory;
+        preferenceHelper.setHeadlinesCategory(newCategory);
+        reload();
+    }
+
+    @NonNull
     @Override
-    protected void onCleared() {
-        super.onCleared();
-        compositeDisposable.dispose();
+    protected Single<ArticlePage> loadPage(int page) {
+        return newsRepository.getTopHeadlines(country, category, page);
     }
 
 }

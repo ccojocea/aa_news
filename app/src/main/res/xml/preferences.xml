@@ -19,4 +19,21 @@
         android:summaryOff="@string/settings_swipe_off"
         android:title="@string/settings_swipe_title" />
 
+    <PreferenceCategory android:title="@string/settings_news_category">
+
+        <!-- entries are filled in by the SettingsFragment from the countries / languages supported by the API -->
+        <ListPreference
+            android:icon="@drawable/ic_headlines"
+            android:key="@string/preference_key_country"
+            android:title="@string/settings_country_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <ListPreference
+            android:icon="@drawable/ic_search"
+            android:key="@string/preference_key_language"
+            android:title="@string/settings_language_title"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
 </PreferenceScreen>

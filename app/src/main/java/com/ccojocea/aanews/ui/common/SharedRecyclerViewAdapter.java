@@ -1,7 +1,6 @@
 package com.ccojocea.aanews.ui.common;
 
 import android.content.Context;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,142 +11,110 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.ItemTouchHelper;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.TimeUtil;
 import com.ccojocea.aanews.common.Utils;
-import com.ccojocea.aanews.databinding.LayoutAddItemBinding;
 import com.ccojocea.aanews.databinding.LayoutDefaultNewsItemBinding;
 import com.ccojocea.aanews.databinding.LayoutLargeNewsItemBinding;
 import com.ccojocea.aanews.models.entity.ArticleEntity;
 import com.ccojocea.aanews.ui.webview.WebViewActivity;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static androidx.recyclerview.widget.RecyclerView.NO_POSITION;
 
-public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder>{
+public class SharedRecyclerViewAdapter extends ListAdapter<ArticleEntity, SharedRecyclerViewAdapter.ArticleViewHolder> {
+
+    private static final int VIEW_TYPE_DEFAULT = 0;
+    private static final int VIEW_TYPE_LARGE = 1;
+
+    // every n-th article is shown with a large image
+    private static final int LARGE_ITEM_INTERVAL = 5;
+
+    // passed to onBindViewHolder when only the bookmark state of an article changed
+    private static final Object PAYLOAD_BOOKMARK = new Object();
 
     // used by Bookmarks (just default type of view)
     private boolean isDefaultType;
 
     private boolean isItemViewSwipeEnabled;
 
-    private static final int VIEW_TYPE_DEFAULT = 0;
-    private static final int VIEW_TYPE_LARGE = 1;
-    private static final int VIEW_TYPE_ADD = 2;
+    @Nullable
+    private NewsAdapterListener listener;
 
-    @NonNull
-    private List<ArticleEntity> items = new ArrayList<>();
+    public SharedRecyclerViewAdapter() {
+        super(DIFF_CALLBACK);
+    }
 
     @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        switch (viewType) {
-            case VIEW_TYPE_DEFAULT:
-                return new DefaultItemViewHolder(LayoutDefaultNewsItemBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
-            case VIEW_TYPE_LARGE:
-                return new LargeItemViewHolder(LayoutLargeNewsItemBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
-            case VIEW_TYPE_ADD:
-                return new AddItemViewHolder(LayoutAddItemBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false));
-            default:
-                throw new RuntimeException("No handling matches that type");
+    public ArticleViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        ArticleViewHolder holder;
+        if (viewType == VIEW_TYPE_LARGE) {
+            holder = new LargeItemViewHolder(LayoutLargeNewsItemBinding.inflate(inflater, parent, false));
+        } else {
+            holder = new DefaultItemViewHolder(LayoutDefaultNewsItemBinding.inflate(inflater, parent, false));
+        }
+
+        // listeners are set once per view holder and look up the article when clicked, so they never use a stale position
+        holder.getRoot().setOnClickListener(v -> {
+            ArticleEntity article = getArticle(holder.getBindingAdapterPosition());
+            if (article != null) {
+                Context context = v.getContext();
+                context.startActivity(WebViewActivity.newIntent(context, article));
+            }
+        });
+        holder.getShare().setOnClickListener(v -> {
+            ArticleEntity article = getArticle(holder.getBindingAdapterPosition());
+            if (article != null) {
+                Utils.shareLink(v.getContext(), article.getUrl());
+            }
+        });
+        holder.getBookmark().setOnClickListener(v -> {
+            ArticleEntity article = getArticle(holder.getBindingAdapterPosition());
+            if (article != null) {
+                toggleBookmark(article, holder);
+            }
+        });
+        return holder;
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ArticleViewHolder holder, int position) {
+        holder.bind(getItem(position));
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull ArticleViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (!payloads.isEmpty() && payloads.contains(PAYLOAD_BOOKMARK)) {
+            holder.bindBookmark(getItem(position).isSaved());
+        } else {
+            onBindViewHolder(holder, position);
         }
     }
 
-    @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        ArticleEntity article = items.get(position);
-        switch (getItemViewType(position)) {
-            case VIEW_TYPE_DEFAULT:
-                LayoutDefaultNewsItemBinding layoutDefaultNewsItemBinding = ((DefaultItemViewHolder) holder).binding;
-                layoutDefaultNewsItemBinding.description.setText(article.getDescription() != null ? article.getDescription() : article.getContent());
-            case VIEW_TYPE_LARGE:
-                ArticleBindingInterface binding = ((ArticleBindingInterface) holder);
-                binding.getRoot().setOnClickListener(v -> {
-                    Context context = binding.getRoot().getContext();
-                    context.startActivity(WebViewActivity.newIntent(context, article));
-                });
-
-                binding.getShare().setOnClickListener(v -> {
-                    Utils.shareLink(binding.getRoot().getContext(), article.getUrl());
-                });
-
-                binding.getBookmark().setOnClickListener(v -> {
-                    setBookmark(article, binding, position);
-                });
-
-                if (article.isSaved()) {
-                    binding.getBookmark().setImageResource(R.drawable.ic_bookmark_selected);
-                } else {
-                    binding.getBookmark().setImageResource(R.drawable.ic_bookmark);
-                }
-                binding.getAuthorText().setText(article.getAuthor());
-                binding.getPublishedAtText().setText(TimeUtil.convertToReadableTime(article.getPublishedAt()));
-                binding.getSourceNameText().setText(article.getSource().getName());
-                binding.getTitleText().setText(article.getTitle());
-                if (article.getUrlToImage() != null) {
-                    Glide.with(binding.getRoot().getContext())
-                            .load(article.getUrlToImage())
-                            .error(R.drawable.placeholder)
-                            .into(binding.getArticleImage());
-                } else {
-                    Glide.with(binding.getRoot().getContext())
-                            .load(R.drawable.placeholder)
-                            .into(binding.getArticleImage());
-                }
-                break;
-            case VIEW_TYPE_ADD:
-                break;
-        }
-    }
-
-    //TODO Implement this - call the same bind method in here to avoid rewriting code
-    @Override
-    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List<Object> payloads) {
-        super.onBindViewHolder(holder, position, payloads);
-    }
-
-    //TODO VIEW_TYPE_ADD
     @Override
     public int getItemViewType(int position) {
-        if (isDefaultType) {
+        if (isDefaultType || position % LARGE_ITEM_INTERVAL != 0) {
             return VIEW_TYPE_DEFAULT;
-        } else {
-            if (position % 5 == 0) {
-                return VIEW_TYPE_LARGE;
-            } else {
-                return VIEW_TYPE_DEFAULT;
-            }
         }
+        return VIEW_TYPE_LARGE;
     }
 
     public void setDefaultType(boolean isDefaultType) {
         this.isDefaultType = isDefaultType;
     }
 
-    @Override
-    public int getItemCount() {
-        return items.size();
-    }
-
-    public void setItems(@NonNull List<ArticleEntity> list) {
-        this.items = list;
-        notifyDataSetChanged();
-    }
-
-    public void setChildItems(@NonNull List<? extends ArticleEntity> list) {
-        this.items = new ArrayList<>(list);
-        notifyDataSetChanged();
-    }
-
     @Nullable
-    public ArticleEntity getItem(int position) {
-        if (position > NO_POSITION && items.size() > position) {
-            return items.get(position);
+    public ArticleEntity getArticle(int position) {
+        if (position > NO_POSITION && position < getItemCount()) {
+            return getItem(position);
         }
         return null;
     }
@@ -156,22 +123,23 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
         SwipeCallback swipeCallback = new SwipeCallback(context) {
             @Override
             public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
-                ArticleBindingInterface binding = ((ArticleBindingInterface) viewHolder);
-                final int position = viewHolder.getAdapterPosition();
-                ArticleEntity article = getItem(position);
+                final int position = viewHolder.getBindingAdapterPosition();
+                ArticleEntity article = getArticle(position);
                 if (article != null) {
                     switch (direction) {
                         case ItemTouchHelper.LEFT:
-                            Utils.shareLink(viewHolder.itemView.getContext(), getItem(position).getUrl());
-                            //TODO Is there a better solution to reset here?
-                            notifyItemChanged(viewHolder.getAdapterPosition());
+                            Utils.shareLink(viewHolder.itemView.getContext(), article.getUrl());
                             break;
                         case ItemTouchHelper.RIGHT:
-                            setBookmark(article, binding, position);
-                            //not needed since it gets refreshed due to database update
-                            //notifyItemChanged(viewHolder.getAdapterPosition());
+                            if (listener != null && !Utils.shouldPreventMisClick()) {
+                                listener.onBookmarkClicked(article, !article.isSaved());
+                            }
                             break;
                     }
+                }
+                // ItemTouchHelper keeps a swiped view off screen until its item changes, this brings it back
+                if (position != NO_POSITION) {
+                    notifyItemChanged(position);
                 }
             }
 
@@ -189,160 +157,17 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
         this.isItemViewSwipeEnabled = isItemViewSwipeEnabled;
     }
 
-    private void setBookmark(@NonNull ArticleEntity article, @NonNull ArticleBindingInterface binding, int position) {
+    private void toggleBookmark(@NonNull ArticleEntity article, @NonNull ArticleViewHolder holder) {
         if (Utils.shouldPreventMisClick()) {
             return;
         }
-        if (article.isSaved()) {
-            article.setSaved(false);
-            binding.getBookmark().setImageResource(R.drawable.ic_bookmark);
-            if (listener != null) {
-                listener.onBookmarkClicked(position, false);
-            }
-        } else {
-            article.setSaved(true);
-            binding.getBookmark().setImageResource(R.drawable.ic_bookmark_selected);
-            if (listener != null) {
-                listener.onBookmarkClicked(position, true);
-            }
+        boolean shouldSave = !article.isSaved();
+        // immediate feedback, the list itself is updated once the database changes
+        holder.bindBookmark(shouldSave);
+        if (listener != null) {
+            listener.onBookmarkClicked(article, shouldSave);
         }
     }
-
-    public static class DefaultItemViewHolder extends RecyclerView.ViewHolder implements ArticleBindingInterface {
-
-        private LayoutDefaultNewsItemBinding binding;
-
-        public DefaultItemViewHolder(LayoutDefaultNewsItemBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
-        }
-
-        @Override
-        public View getRoot() {
-            return binding.getRoot();
-        }
-
-        @Override
-        public ImageView getArticleImage() {
-            return binding.articleImage;
-        }
-
-        @Override
-        public ImageView getShare() {
-            return binding.share;
-        }
-
-        @Override
-        public ImageView getBookmark() {
-            return binding.bookmark;
-        }
-
-        @Override
-        public TextView getAuthorText() {
-            return binding.author;
-        }
-
-        @Override
-        public TextView getPublishedAtText() {
-            return binding.publishedAt;
-        }
-
-        @Override
-        public TextView getSourceNameText() {
-            return binding.sourceName;
-        }
-
-        @Override
-        public TextView getTitleText() {
-            return binding.title;
-        }
-
-    }
-
-    public static class LargeItemViewHolder extends RecyclerView.ViewHolder implements ArticleBindingInterface {
-
-        private LayoutLargeNewsItemBinding binding;
-
-        public LargeItemViewHolder(LayoutLargeNewsItemBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
-        }
-
-        @Override
-        public View getRoot() {
-            return binding.getRoot();
-        }
-
-        @Override
-        public ImageView getArticleImage() {
-            return binding.articleImage;
-        }
-
-        @Override
-        public ImageView getShare() {
-            return binding.share;
-        }
-
-        @Override
-        public ImageView getBookmark() {
-            return binding.bookmark;
-        }
-
-        @Override
-        public TextView getAuthorText() {
-            return binding.author;
-        }
-
-        @Override
-        public TextView getPublishedAtText() {
-            return binding.publishedAt;
-        }
-
-        @Override
-        public TextView getSourceNameText() {
-            return binding.sourceName;
-        }
-
-        @Override
-        public TextView getTitleText() {
-            return binding.title;
-        }
-
-    }
-
-    public static class AddItemViewHolder extends RecyclerView.ViewHolder {
-
-        private LayoutAddItemBinding binding;
-
-        public AddItemViewHolder(LayoutAddItemBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
-        }
-
-    }
-
-    protected interface ArticleBindingInterface {
-
-        View getRoot();
-
-        ImageView getArticleImage();
-
-        ImageView getShare();
-
-        ImageView getBookmark();
-
-        TextView getAuthorText();
-
-        TextView getPublishedAtText();
-
-        TextView getSourceNameText();
-
-        TextView getTitleText();
-
-    }
-
-    @Nullable
-    private NewsAdapterListener listener;
 
     public void setAdapterListener(@Nullable NewsAdapterListener listener) {
         this.listener = listener;
@@ -350,74 +175,194 @@ public class SharedRecyclerViewAdapter extends RecyclerView.Adapter<RecyclerView
 
     public interface NewsAdapterListener {
 
-        void onBookmarkClicked(int position, boolean shouldSave);
+        void onBookmarkClicked(@NonNull ArticleEntity article, boolean shouldSave);
 
     }
 
+    public abstract static class ArticleViewHolder extends RecyclerView.ViewHolder {
 
+        ArticleViewHolder(@NonNull View itemView) {
+            super(itemView);
+        }
 
+        abstract View getRoot();
 
-    //TODO TEST
-    public void updateNewItems(@NonNull List<ArticleEntity> newItems) {
-        DiffUtil.DiffResult diffResult = DiffUtil.calculateDiff(new NewsDiffUtilCallback(newItems, items));
-        diffResult.dispatchUpdatesTo(this);
-        items.clear();
-        this.items.addAll(newItems);
+        abstract ImageView getArticleImage();
+
+        abstract ImageView getShare();
+
+        abstract ImageView getBookmark();
+
+        abstract TextView getAuthorText();
+
+        abstract TextView getPublishedAtText();
+
+        abstract TextView getSourceNameText();
+
+        abstract TextView getTitleText();
+
+        void bind(@NonNull ArticleEntity article) {
+            bindBookmark(article.isSaved());
+            getAuthorText().setText(article.getAuthor());
+            getPublishedAtText().setText(TimeUtil.convertToReadableTime(article.getPublishedAt()));
+            getSourceNameText().setText(article.getSource().getName());
+            getTitleText().setText(article.getTitle());
+            if (article.getUrlToImage() != null) {
+                Glide.with(getRoot())
+                        .load(article.getUrlToImage())
+                        .error(R.drawable.placeholder)
+                        .into(getArticleImage());
+            } else {
+                Glide.with(getRoot())
+                        .load(R.drawable.placeholder)
+                        .into(getArticleImage());
+            }
+        }
+
+        void bindBookmark(boolean isSaved) {
+            getBookmark().setImageResource(isSaved ? R.drawable.ic_bookmark_selected : R.drawable.ic_bookmark);
+        }
+
     }
 
-    public void addItems(@NonNull List<ArticleEntity> newItems) {
-        int lastIndex = items.size() - 1;
-        this.items.addAll(newItems);
-        notifyItemRangeInserted(lastIndex, newItems.size());
+    public static class DefaultItemViewHolder extends ArticleViewHolder {
+
+        private final LayoutDefaultNewsItemBinding binding;
+
+        public DefaultItemViewHolder(LayoutDefaultNewsItemBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
+        }
+
+        @Override
+        void bind(@NonNull ArticleEntity article) {
+            super.bind(article);
+            binding.description.setText(article.getDescription() != null ? article.getDescription() : article.getContent());
+        }
+
+        @Override
+        View getRoot() {
+            return binding.getRoot();
+        }
+
+        @Override
+        ImageView getArticleImage() {
+            return binding.articleImage;
+        }
+
+        @Override
+        ImageView getShare() {
+            return binding.share;
+        }
+
+        @Override
+        ImageView getBookmark() {
+            return binding.bookmark;
+        }
+
+        @Override
+        TextView getAuthorText() {
+            return binding.author;
+        }
+
+        @Override
+        TextView getPublishedAtText() {
+            return binding.publishedAt;
+        }
+
+        @Override
+        TextView getSourceNameText() {
+            return binding.sourceName;
+        }
+
+        @Override
+        TextView getTitleText() {
+            return binding.title;
+        }
+
     }
 
-    public static class NewsDiffUtilCallback extends DiffUtil.Callback {
+    public static class LargeItemViewHolder extends ArticleViewHolder {
 
-        List<ArticleEntity> newList;
-        List<ArticleEntity> oldList;
+        private final LayoutLargeNewsItemBinding binding;
 
-        public NewsDiffUtilCallback(List<ArticleEntity> newList, List<ArticleEntity> oldList) {
-            this.newList = newList;
-            this.oldList = oldList;
+        public LargeItemViewHolder(LayoutLargeNewsItemBinding binding) {
+            super(binding.getRoot());
+            this.binding = binding;
         }
 
         @Override
-        public int getOldListSize() {
-            return oldList != null ? oldList.size() : 0;
+        View getRoot() {
+            return binding.getRoot();
         }
 
         @Override
-        public int getNewListSize() {
-            return newList != null ? newList.size() : 0;
+        ImageView getArticleImage() {
+            return binding.articleImage;
         }
 
         @Override
-        public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-            return newList.get(newItemPosition).getUrl().equals(oldList.get(oldItemPosition).getUrl());
+        ImageView getShare() {
+            return binding.share;
         }
 
         @Override
-        public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-            int result = newList.get(newItemPosition).compareTo(oldList.get(oldItemPosition));
-            return result == 0;
+        ImageView getBookmark() {
+            return binding.bookmark;
+        }
+
+        @Override
+        TextView getAuthorText() {
+            return binding.author;
+        }
+
+        @Override
+        TextView getPublishedAtText() {
+            return binding.publishedAt;
+        }
+
+        @Override
+        TextView getSourceNameText() {
+            return binding.sourceName;
+        }
+
+        @Override
+        TextView getTitleText() {
+            return binding.title;
+        }
+
+    }
+
+    private static boolean isSameContentIgnoringSaved(@NonNull ArticleEntity oldArticle, @NonNull ArticleEntity newArticle) {
+        return oldArticle.getTitle().equals(newArticle.getTitle())
+                && oldArticle.getAuthor().equals(newArticle.getAuthor())
+                && oldArticle.getPublishedAt().equals(newArticle.getPublishedAt())
+                && oldArticle.getSource().getName().equals(newArticle.getSource().getName())
+                && Objects.equals(oldArticle.getDescription(), newArticle.getDescription())
+                && Objects.equals(oldArticle.getUrlToImage(), newArticle.getUrlToImage());
+    }
+
+    private static final DiffUtil.ItemCallback<ArticleEntity> DIFF_CALLBACK = new DiffUtil.ItemCallback<ArticleEntity>() {
+
+        @Override
+        public boolean areItemsTheSame(@NonNull ArticleEntity oldItem, @NonNull ArticleEntity newItem) {
+            return oldItem.getUrl().equals(newItem.getUrl());
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull ArticleEntity oldItem, @NonNull ArticleEntity newItem) {
+            return oldItem.isSaved() == newItem.isSaved() && isSameContentIgnoringSaved(oldItem, newItem);
         }
 
         @Nullable
         @Override
-        public Object getChangePayload(int oldItemPosition, int newItemPosition) {
-            ArticleEntity newArticle = newList.get(newItemPosition);
-            ArticleEntity oldArticle = oldList.get(oldItemPosition);
-
-            Bundle diffBundle = new Bundle();
-
-            if (newArticle.isSaved() != oldArticle.isSaved()) {
-                diffBundle.putBoolean("isSaved", newArticle.isSaved());
+        public Object getChangePayload(@NonNull ArticleEntity oldItem, @NonNull ArticleEntity newItem) {
+            if (oldItem.isSaved() != newItem.isSaved() && isSameContentIgnoringSaved(oldItem, newItem)) {
+                return PAYLOAD_BOOKMARK;
             }
-            if (diffBundle.size() == 0) {
-                return null;
-            }
-            return diffBundle;
+            return null;
         }
-    }
+
+    };
 
 }

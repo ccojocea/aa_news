@@ -1,7 +1,6 @@
 package com.ccojocea.aanews.ui;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -9,14 +8,15 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.preference.PreferenceManager;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.ccojocea.aanews.R;
+import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.databinding.ActivityMainBinding;
 import com.ccojocea.aanews.ui.common.BaseActivity;
 import com.ccojocea.aanews.ui.common.HorizontalFlipTransformation;
 import com.ccojocea.aanews.ui.settings.SettingsActivity;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -108,33 +108,34 @@ public class MainActivity extends BaseActivity {
             }
         });
 
-        sharedViewModel.getCurrentItemData().observe(this, integer -> {
-            if (integer != null) {
-                if (integer != binding.viewPager2.getCurrentItem()) {
-                    binding.viewPager2.setCurrentItem(integer);
-                }
+        sharedViewModel.getSwipeData().observe(this, isSwipeOn -> {
+            Timber.d("Preference - Swipe Data - Main: %s", isSwipeOn);
+            binding.viewPager2.setUserInputEnabled(Boolean.TRUE.equals(isSwipeOn));
+        });
+
+        // bookmark changes from any tab end up here, so only one snackbar is shown
+        sharedViewModel.getBookmarkData().observe(this, event -> {
+            SharedViewModel.BookmarkChange change = event.getContentIfNotHandled();
+            if (change != null) {
+                showBookmarkChange(change);
             }
         });
 
-        setupSwipeBehaviour();
-    }
-
-    private void setupSwipeBehaviour() {
-        Timber.d("Swipe setupSwipeBehaviour");
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean isSwipeOn = preferences.getBoolean(getString(R.string.preference_key_swipe), false);
-
-        sharedViewModel.getSwipeData().observe(this, isSwipeOnUpdate -> {
-            Timber.d("Preference - Swipe Data - Main");
-            binding.viewPager2.setUserInputEnabled(isSwipeOnUpdate);
+        sharedViewModel.getErrorLiveData().observe(this, event -> {
+            String message = event.getContentIfNotHandled();
+            if (message != null) {
+                Utils.showSnackBar(getRoot(), message, Snackbar.LENGTH_LONG, true);
+            }
         });
-        sharedViewModel.setInitialSwipe(isSwipeOn);
     }
 
-    @Override
-    protected void onStop() {
-        super.onStop();
-        sharedViewModel.setCurrentItem(binding.viewPager2.getCurrentItem());
+    private void showBookmarkChange(@NonNull SharedViewModel.BookmarkChange change) {
+        String message = getString(change.isSaved ? R.string.bookmark_saved : R.string.bookmark_removed);
+        if (change.canUndo) {
+            Utils.showSnackBar(getRoot(), message, Snackbar.LENGTH_LONG, false, v -> sharedViewModel.undo(change));
+        } else {
+            Utils.showSnackBar(getRoot(), message, Snackbar.LENGTH_SHORT, false);
+        }
     }
 
     @Override

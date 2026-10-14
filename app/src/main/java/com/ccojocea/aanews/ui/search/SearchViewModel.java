@@ -1,122 +1,102 @@
 package com.ccojocea.aanews.ui.search;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import com.ccojocea.aanews.common.App;
-import com.ccojocea.aanews.common.Utils;
-import com.ccojocea.aanews.data.NewsRepository;
-import com.ccojocea.aanews.models.entity.ArticleEntity;
-import com.ccojocea.aanews.models.entity.SavedArticleEntity;
+import com.ccojocea.aanews.data.remote.enums.NewsLanguage;
+import com.ccojocea.aanews.data.remote.enums.NewsSortBy;
+import com.ccojocea.aanews.models.ArticlePage;
+import com.ccojocea.aanews.ui.common.PagedArticlesViewModel;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Observable;
-import io.reactivex.Observer;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
-import okhttp3.internal.Util;
+import io.reactivex.subjects.PublishSubject;
 import timber.log.Timber;
 
-public class SearchViewModel extends ViewModel {
+public class SearchViewModel extends PagedArticlesViewModel {
 
     private static final int DELAY = 500;
 
-    protected final NewsRepository newsRepository;
+    // the text typed by the user, searched once it stops changing for DELAY ms
+    private final PublishSubject<String> queries = PublishSubject.create();
 
-    private CompositeDisposable compositeDisposable = new CompositeDisposable();
-
-    private final MutableLiveData<String> errorLiveData = new MutableLiveData<>(null);
-    private final MutableLiveData<List<ArticleEntity>> resultsData = new MutableLiveData<>();
+    @NonNull
+    private String query = "";
+    @NonNull
+    private NewsSortBy sortBy;
+    @NonNull
+    private NewsLanguage language;
 
     public SearchViewModel() {
-        newsRepository = App.getAppComponent().newsRepository();
+        sortBy = preferenceHelper.getSearchSortBy();
+        language = preferenceHelper.getNewsLanguage();
 
-        // update the list if there's a change in the bookmark database
-        compositeDisposable.add(newsRepository.listenToBookmarks()
-                //keep the work in background due to iterations, update with postValue
-                .observeOn(Schedulers.io())
-                .subscribe(savedArticles -> {
-                    List<ArticleEntity> resultArticles = resultsData.getValue();
-                    if (resultArticles != null && resultArticles.size() > 0) {
-                        for (ArticleEntity resultArticle : resultArticles) {
-                            for (ArticleEntity savedArticle : savedArticles) {
-                                if (savedArticle.getUrl().equals(resultArticle.getUrl())) {
-                                    resultArticle.setSaved(true);
-                                    break;
-                                } else {
-                                    resultArticle.setSaved(false);
-                                }
-                            }
-                        }
-                        resultsData.postValue(resultArticles);
-                    }
-                }, throwable -> {
-                    Timber.e(throwable, "Error while fetching bookmarked articles:");
-                }));
-    }
-
-    public void searchForArticle(String query) {
-        compositeDisposable.add(newsRepository.searchArticles(query, null)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(articleEntityList -> {
-                    resultsData.setValue(articleEntityList);
-                }, throwable -> {
-                    errorLiveData.setValue(Utils.getErrorMessage(throwable));
-                    Timber.e(throwable);
-                }));
-    }
-
-    public MutableLiveData<List<ArticleEntity>> getResultsData() {
-        return resultsData;
-    }
-
-    public void setupSearchObserver(Observable<String> observableQuery) {
-        // Subscribe an Observer
-        observableQuery
+        // subscribed once for the lifetime of the view model, the fragment only pushes text into it
+        compositeDisposable.add(queries
+                .map(String::trim)
                 .debounce(DELAY, TimeUnit.MILLISECONDS)
-                .observeOn(Schedulers.io())
-                .subscribe(new Observer<String>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        compositeDisposable.add(d);
-                    }
+                .distinctUntilChanged()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(this::search, throwable -> Timber.e(throwable, "Error in the search query stream"))
+        );
 
-                    @Override
-                    public void onNext(String s) {
-                        if (!s.isEmpty()) {
-                            searchForArticle(s);
-                        }
+        // the current language is already used above, only react to changes
+        compositeDisposable.add(preferenceHelper.listenToNewsLanguage()
+                .skip(1)
+                .subscribe(newLanguage -> {
+                    language = newLanguage;
+                    if (hasQuery()) {
+                        reload();
                     }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        Timber.d(e);
-                    }
-
-                    @Override
-                    public void onComplete() {
-
-                    }
-                });
+                }, throwable -> Timber.e(throwable, "Error while listening to the language preference"))
+        );
     }
 
-    public LiveData<String> getErrorLiveData() {
-        return errorLiveData;
+    public void onQueryChanged(@Nullable String text) {
+        queries.onNext(text != null ? text : "");
     }
 
-    public void resetError() {
-        errorLiveData.setValue(null);
+    private void search(@NonNull String newQuery) {
+        query = newQuery;
+        if (newQuery.isEmpty()) {
+            clear();
+        } else {
+            // cancels the request for the previous query, if it is still running
+            reload();
+        }
     }
 
+    public boolean hasQuery() {
+        return !query.isEmpty();
+    }
+
+    @NonNull
+    public String getQuery() {
+        return query;
+    }
+
+    @NonNull
+    public NewsSortBy getSortBy() {
+        return sortBy;
+    }
+
+    public void setSortBy(@NonNull NewsSortBy newSortBy) {
+        if (newSortBy == sortBy) {
+            return;
+        }
+        sortBy = newSortBy;
+        preferenceHelper.setSearchSortBy(newSortBy);
+        if (hasQuery()) {
+            reload();
+        }
+    }
+
+    @NonNull
     @Override
-    protected void onCleared() {
-        super.onCleared();
-        compositeDisposable.clear();
+    protected Single<ArticlePage> loadPage(int page) {
+        return newsRepository.searchArticles(query, language, sortBy, page);
     }
 
 }

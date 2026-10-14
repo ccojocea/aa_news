@@ -6,4 +6,8 @@
     <dimen name="large_item_image_content_padding">6dp</dimen>
     <dimen name="settings_icon_size">32dp</dimen>
     <dimen name="overview_settings_icon_size">24dp</dimen>
+    <dimen name="chip_row_vertical_padding">4dp</dimen>
+    <dimen name="empty_view_padding">24dp</dimen>
+    <dimen name="empty_view_text_margin">12dp</dimen>
+    <dimen name="dialog_padding">24dp</dimen>
 </resources>

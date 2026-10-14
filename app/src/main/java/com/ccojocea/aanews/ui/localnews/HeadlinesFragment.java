@@ -8,34 +8,27 @@ import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.ccojocea.aanews.R;
-import com.ccojocea.aanews.common.Utils;
-import com.ccojocea.aanews.ui.MainActivity;
-import com.ccojocea.aanews.ui.SharedViewModel;
-import com.ccojocea.aanews.ui.common.BaseFragment;
-import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
-import com.ccojocea.aanews.ui.common.VerticalItemDecoration;
+import com.ccojocea.aanews.data.remote.enums.NewsCategory;
 import com.ccojocea.aanews.databinding.FragmentHeadlinesBinding;
-import com.google.android.material.snackbar.Snackbar;
+import com.ccojocea.aanews.ui.common.BaseFragment;
+import com.ccojocea.aanews.ui.common.LoadMoreScrollListener;
+import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
+import com.google.android.material.chip.Chip;
 
-import timber.log.Timber;
-
-public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayout.OnRefreshListener, SharedRecyclerViewAdapter.NewsAdapterListener {
+public class HeadlinesFragment extends BaseFragment {
 
     private FragmentHeadlinesBinding binding;
     private HeadlinesViewModel viewModel;
-    private SharedViewModel sharedViewModel;
     private SharedRecyclerViewAdapter adapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(HeadlinesViewModel.class);
-        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
     }
 
     @Nullable
@@ -50,20 +43,80 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
         super.onViewCreated(view, savedInstanceState);
 
         adapter = new SharedRecyclerViewAdapter();
-        adapter.setAdapterListener(this);
-        if (binding.recyclerView.getItemAnimator() != null) {
-            binding.recyclerView.getItemAnimator().setChangeDuration(0);
-        }
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerView.addItemDecoration(new VerticalItemDecoration());
-        binding.recyclerView.setAdapter(adapter);
-        binding.refreshLayout.setOnRefreshListener(this);
+        setupArticleList(binding.recyclerView, adapter);
+        binding.recyclerView.addOnScrollListener(new LoadMoreScrollListener(viewModel::loadMore));
 
+        binding.refreshLayout.setOnRefreshListener(viewModel::reload);
+        // the list is wrapped in a layout, tell the refresh layout when the list itself can still scroll up
+        binding.refreshLayout.setOnChildScrollUpCallback((parent, child) -> binding.recyclerView.canScrollVertically(-1));
+
+        setupCategories();
         setupLiveData();
+    }
 
-        if (getContext() != null) {
-            adapter.setupSwipeCallback(binding.recyclerView, getContext());
+    private void setupCategories() {
+        LayoutInflater inflater = getLayoutInflater();
+        for (NewsCategory category : NewsCategory.values()) {
+            Chip chip = (Chip) inflater.inflate(R.layout.layout_filter_chip, binding.categoryChips, false);
+            // chips are created again with new ids together with the view, their state must not be restored
+            chip.setId(View.generateViewId());
+            chip.setSaveEnabled(false);
+            chip.setText(getCategoryName(category));
+            chip.setTag(category);
+            binding.categoryChips.addView(chip);
+            if (category == viewModel.getCategory()) {
+                chip.setChecked(true);
+            }
         }
+        binding.categoryChips.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (checkedIds.isEmpty()) {
+                return;
+            }
+            Chip checked = group.findViewById(checkedIds.get(0));
+            if (checked != null && checked.getTag() instanceof NewsCategory) {
+                binding.recyclerView.scrollToPosition(0);
+                viewModel.setCategory((NewsCategory) checked.getTag());
+            }
+        });
+    }
+
+    @StringRes
+    private static int getCategoryName(@NonNull NewsCategory category) {
+        switch (category) {
+            case BUSINESS:
+                return R.string.category_business;
+            case ENTERTAINMENT:
+                return R.string.category_entertainment;
+            case GENERAL:
+                return R.string.category_general;
+            case HEALTH:
+                return R.string.category_health;
+            case SCIENCE:
+                return R.string.category_science;
+            case SPORTS:
+                return R.string.category_sports;
+            case TECHNOLOGY:
+                return R.string.category_technology;
+            case ALL:
+            default:
+                return R.string.category_all;
+        }
+    }
+
+    private void setupLiveData() {
+        viewModel.getArticlesLiveData().observe(getViewLifecycleOwner(), articleEntities -> {
+            adapter.submitList(articleEntities);
+            boolean isEmpty = articleEntities.isEmpty();
+            binding.recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+            binding.emptyView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
+            if (isEmpty) {
+                binding.emptyText.setText(getString(R.string.headlines_empty, viewModel.getCountry().getDisplayName()));
+            }
+        });
+
+        viewModel.getLoadingLiveData().observe(getViewLifecycleOwner(), isLoading -> binding.refreshLayout.setRefreshing(isLoading));
+
+        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), this::showError);
     }
 
     @Override
@@ -75,55 +128,6 @@ public class HeadlinesFragment extends BaseFragment implements SwipeRefreshLayou
     @Override
     public String getFragmentTitle(Context context) {
         return context.getString(R.string.title_headlines);
-    }
-
-    public void setupLiveData() {
-        viewModel.getTopHeadlinesLiveData().observe(getViewLifecycleOwner(), articleEntities -> {
-            if (getContext() != null) {
-                binding.refreshLayout.setRefreshing(false);
-                if (articleEntities.size() > 0) {
-                    adapter.setItems(articleEntities);
-                    binding.recyclerView.setVisibility(View.VISIBLE);
-                    binding.emptyView.setVisibility(View.GONE);
-                } else {
-                    binding.recyclerView.setVisibility(View.GONE);
-                    binding.emptyView.setVisibility(View.VISIBLE);
-                }
-            }
-        });
-
-        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), errorMessage -> {
-            if (errorMessage != null) {
-                binding.refreshLayout.setRefreshing(false);
-                viewModel.resetError();
-                if (getContext() != null) {
-                    Utils.showSnackBar(((MainActivity)getContext()).getRoot(), errorMessage, Snackbar.LENGTH_LONG, true);
-                }
-            }
-        });
-
-        sharedViewModel.getSwipeData().observe(getViewLifecycleOwner(), isViewPagerSwipeEnabled -> {
-            Timber.d("Preference - Swipe Data - Headlines");
-            adapter.setItemViewSwipeEnabled(!isViewPagerSwipeEnabled);
-        });
-
-        sharedViewModel.getBookmarkData().observe(getViewLifecycleOwner(), isSaved -> {
-            if (isSaved != null && getContext() != null) {
-                sharedViewModel.resetBookmarkData();
-                String message = isSaved ? getString(R.string.bookmark_saved) : getString(R.string.bookmark_removed);
-                Utils.showSnackBar(((MainActivity)getContext()).getRoot(), message, Snackbar.LENGTH_SHORT, false);
-            }
-        });
-    }
-
-    @Override
-    public void onRefresh() {
-        viewModel.getTopHeadlines();
-    }
-
-    @Override
-    public void onBookmarkClicked(int position, boolean shouldSave) {
-        sharedViewModel.onBookmarkClicked(adapter.getItem(position), shouldSave);
     }
 
 }

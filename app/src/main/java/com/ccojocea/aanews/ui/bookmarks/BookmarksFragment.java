@@ -9,33 +9,22 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.ccojocea.aanews.R;
-import com.ccojocea.aanews.common.Utils;
 import com.ccojocea.aanews.databinding.FragmentBookmarksBinding;
-import com.ccojocea.aanews.models.entity.ArticleEntity;
-import com.ccojocea.aanews.ui.MainActivity;
-import com.ccojocea.aanews.ui.SharedViewModel;
 import com.ccojocea.aanews.ui.common.BaseFragment;
 import com.ccojocea.aanews.ui.common.SharedRecyclerViewAdapter;
-import com.ccojocea.aanews.ui.common.VerticalItemDecoration;
-import com.google.android.material.snackbar.Snackbar;
 
-import timber.log.Timber;
-
-public class BookmarksFragment extends BaseFragment implements SharedRecyclerViewAdapter.NewsAdapterListener {
+public class BookmarksFragment extends BaseFragment {
 
     private FragmentBookmarksBinding binding;
     private BookmarksViewModel viewModel;
-    private SharedViewModel sharedViewModel;
     private SharedRecyclerViewAdapter adapter;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         viewModel = new ViewModelProvider(requireActivity()).get(BookmarksViewModel.class);
-        sharedViewModel = new ViewModelProvider(requireActivity()).get(SharedViewModel.class);
     }
 
     @Nullable
@@ -51,38 +40,17 @@ public class BookmarksFragment extends BaseFragment implements SharedRecyclerVie
 
         adapter = new SharedRecyclerViewAdapter();
         adapter.setDefaultType(true);
-        adapter.setAdapterListener(this);
-        binding.recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.recyclerView.addItemDecoration(new VerticalItemDecoration());
-        binding.recyclerView.setAdapter(adapter);
+        // removing a bookmark shows a snackbar with undo, see MainActivity
+        setupArticleList(binding.recyclerView, adapter);
 
-        viewModel.getArticleData().observe(getViewLifecycleOwner(), savedArticleEntities -> {
-            if (savedArticleEntities.size() == 0) {
-                binding.recyclerView.setVisibility(View.GONE);
-                binding.emptyView.setVisibility(View.VISIBLE);
-            } else {
-                binding.emptyView.setVisibility(View.GONE);
-                binding.recyclerView.setVisibility(View.VISIBLE);
-                adapter.setChildItems(savedArticleEntities);
-            }
+        viewModel.getArticlesLiveData().observe(getViewLifecycleOwner(), savedArticleEntities -> {
+            adapter.submitList(savedArticleEntities);
+            boolean isEmpty = savedArticleEntities.isEmpty();
+            binding.recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
+            binding.emptyView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
         });
 
-        viewModel.getBookmarkData().observe(getViewLifecycleOwner(), isSaved -> {
-            if (isSaved != null && getContext() != null && !isSaved) {
-                viewModel.resetBookmarkData();
-                View.OnClickListener listener = v -> viewModel.restoreBookmark();
-                Utils.showSnackBar(((MainActivity)getContext()).getRoot(), getString(R.string.bookmark_removed), Snackbar.LENGTH_SHORT, false, listener);
-            }
-        });
-
-        sharedViewModel.getSwipeData().observe(getViewLifecycleOwner(), isSwipeEnabled -> {
-            Timber.d("Preference - Swipe Data - Bookmarks");
-            adapter.setItemViewSwipeEnabled(!isSwipeEnabled);
-        });
-
-        if (getContext() != null) {
-            adapter.setupSwipeCallback(binding.recyclerView, getContext());
-        }
+        viewModel.getErrorLiveData().observe(getViewLifecycleOwner(), this::showError);
     }
 
     @Override
@@ -94,11 +62,6 @@ public class BookmarksFragment extends BaseFragment implements SharedRecyclerVie
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-    }
-
-    @Override
-    public void onBookmarkClicked(int position, boolean shouldSave) {
-        viewModel.onBookmarkClicked(adapter.getItem(position), shouldSave);
     }
 
 }

@@ -1,6 +1,5 @@
 package com.ccojocea.aanews.ui.settings;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -12,23 +11,22 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.preference.ListPreference;
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
-import androidx.preference.PreferenceManager;
-import androidx.preference.SwitchPreference;
 
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.App;
-import com.ccojocea.aanews.ui.common.BaseActivity;
+import com.ccojocea.aanews.data.remote.enums.NewsCountry;
+import com.ccojocea.aanews.data.remote.enums.NewsLanguage;
 import com.ccojocea.aanews.databinding.ActivitySettingsBinding;
+import com.ccojocea.aanews.ui.common.BaseActivity;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 import javax.inject.Inject;
 
-import io.reactivex.Single;
-import timber.log.Timber;
-
 public class SettingsActivity extends BaseActivity {
-
-    private static final String KEY_UI_MODE = "key_pref_ui_mode";
-    private static final String KEY_SWIPE = "key_swipe";
 
     private ActivitySettingsBinding binding;
 
@@ -80,20 +78,60 @@ public class SettingsActivity extends BaseActivity {
             App.getAppComponent().inject(this);
 
             // dark mode listener
+            // the other preferences are picked up through PreferenceHelper, which listens to all changes
             Preference uiMode = findPreference(getString(R.string.preference_key_ui_mode));
             if (uiMode != null) {
                 uiMode.setOnPreferenceChangeListener(onPreferenceChangeListener);
             }
 
-            // swipe listener
-            Preference swipe = findPreference(getString(R.string.preference_key_swipe));
-            if (swipe != null) {
-                swipe.setOnPreferenceChangeListener(onPreferenceChangeListener);
-            }
-
+            setupCountryPreference();
+            setupLanguagePreference();
         }
 
-        private Preference.OnPreferenceChangeListener onPreferenceChangeListener = (preference, newValue) -> {
+        private void setupCountryPreference() {
+            ListPreference country = findPreference(getString(R.string.preference_key_country));
+            if (country == null) {
+                return;
+            }
+            List<NewsCountry> countries = new ArrayList<>(Arrays.asList(NewsCountry.values()));
+            countries.sort(Comparator.comparing(NewsCountry::getDisplayName));
+            CharSequence[] entries = new CharSequence[countries.size()];
+            CharSequence[] values = new CharSequence[countries.size()];
+            for (int i = 0; i < countries.size(); i++) {
+                entries[i] = countries.get(i).getDisplayName();
+                values[i] = countries.get(i).getValue();
+            }
+            country.setEntries(entries);
+            country.setEntryValues(values);
+            if (country.getValue() == null) {
+                // until the user picks one, the headlines use the country of the device
+                country.setValue(preferenceHelper.getHeadlinesCountry().getValue());
+            }
+        }
+
+        private void setupLanguagePreference() {
+            ListPreference language = findPreference(getString(R.string.preference_key_language));
+            if (language == null) {
+                return;
+            }
+            NewsLanguage[] languages = NewsLanguage.values();
+            CharSequence[] entries = new CharSequence[languages.length];
+            CharSequence[] values = new CharSequence[languages.length];
+            for (int i = 0; i < languages.length; i++) {
+                String displayName = languages[i].getDisplayName();
+                String value = languages[i].getValue();
+                entries[i] = displayName != null ? displayName : getString(R.string.settings_language_all);
+                // a ListPreference can't store null, "" stands for all languages
+                values[i] = value != null ? value : "";
+            }
+            language.setEntries(entries);
+            language.setEntryValues(values);
+            if (language.getValue() == null) {
+                language.setValue("");
+            }
+        }
+
+        private final Preference.OnPreferenceChangeListener onPreferenceChangeListener = (preference, newValue) -> {
             if (preference instanceof ListPreference) {
                 String newValueString = newValue.toString();
                 if (newValueString.equals(getString(R.string.settings_system_mode_display))) {
@@ -105,15 +143,6 @@ public class SettingsActivity extends BaseActivity {
                 }
                 return true;
             }
-
-            if (preference instanceof SwitchPreference) {
-                if (preference.getKey().equals(getString(R.string.preference_key_swipe))) {
-                    Timber.d("Preferences debug - key: %s", newValue);
-                    preferenceHelper.setNewSwipeValue((Boolean)newValue);
-                    return true;
-                }
-            }
-
             return false;
         };
 

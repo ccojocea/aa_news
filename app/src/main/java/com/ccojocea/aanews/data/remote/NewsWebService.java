@@ -1,14 +1,12 @@
 package com.ccojocea.aanews.data.remote;
 
-import com.ccojocea.aanews.common.App;
-import com.ccojocea.aanews.models.dto.ArticleDto;
-import com.ccojocea.aanews.models.responses.ArticlesResponse;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-import java.util.List;
+import com.ccojocea.aanews.models.responses.ArticlesResponse;
 
 import javax.inject.Inject;
 
-import io.reactivex.Observable;
 import io.reactivex.Single;
 import retrofit2.Retrofit;
 import retrofit2.http.GET;
@@ -17,12 +15,16 @@ import timber.log.Timber;
 
 public class NewsWebService {
 
+    public static final int PAGE_SIZE = 20;
+
+    // the free (developer) plan of newsapi.org returns at most 100 results for a query
+    public static final int MAX_RESULTS = 100;
+
     private static final String API_ROUTE_EVERYTHING = "everything";
     private static final String API_ROUTE_HEADLINES = "top-headlines";
 
     //Request parameters
     private static final String PARAM_Q = "q";
-    private static final String PARAM_SOURCES = "sources";
     private static final String PARAM_PAGE_SIZE = "pageSize";
     private static final String PARAM_PAGE = "page";
 
@@ -31,9 +33,7 @@ public class NewsWebService {
     private static final String PARAM_HEADLINES_COUNTRY = "country";
 
     private static final String PARAM_EVERYTHING_LANGUAGE = "language";
-    private static final String PARAM_EVERYTHING_SORT_BY = "sortBy"; //relevancy, popularity, published At(default)
-    private static final String PARAM_EVERYTHING_FROM = "from";
-    private static final String PARAM_EVERYTHING_TO = "to";
+    private static final String PARAM_EVERYTHING_SORT_BY = "sortBy"; //relevancy, popularity, publishedAt(default)
 
     private final NewsApi newsApi;
 
@@ -43,48 +43,42 @@ public class NewsWebService {
         this.newsApi = retrofit.create(NewsApi.class);
     }
 
-    // TODO Add params
-    public Single<List<ArticleDto>> fetchTopHeadlines() {
-        return newsApi.fetchTopHeadlines(null, "sports", App.getApp().getLocale().getCountry())
-                .map(articlesResponse -> articlesResponse.articles);
+    /**
+     * @param country  2-letter ISO 3166-1 code, see NewsCountry
+     * @param category null for all categories, see NewsCategory
+     * @param page     1-based page index
+     */
+    public Single<ArticlesResponse> fetchTopHeadlines(@NonNull String country, @Nullable String category, int page, int pageSize) {
+        return newsApi.fetchTopHeadlines(country, category, pageSize, page);
     }
 
-    // TODO Add params
-    public Single<List<ArticleDto>> fetchEverything(String query) {
-        return newsApi.fetchEverything(query, App.getApp().getLocale().getLanguage())
-                .map(articlesResponse -> articlesResponse.articles);
-    }
-
-    public Single<List<ArticleDto>> fetchEverything(String query, String language) {
-        return newsApi.fetchEverything(query, language)
-                .map(articlesResponse -> articlesResponse.articles);
-    }
-
-    public Single<List<ArticleDto>> fetchPagedTopHeadlines(int page) {
-        return newsApi.fetchPagedTopHeadlines(null, null, App.getApp().getLocale().getCountry(), page)
-                .map(articlesResponse -> articlesResponse.articles);
+    /**
+     * @param query    keywords or phrases, supports AND / OR / NOT and quotes for exact matches
+     * @param language null for all languages, see NewsLanguage
+     * @param sortBy   null for the default (publishedAt), see NewsSortBy
+     * @param page     1-based page index
+     */
+    public Single<ArticlesResponse> fetchEverything(@NonNull String query, @Nullable String language, @Nullable String sortBy, int page, int pageSize) {
+        return newsApi.fetchEverything(query, language, sortBy, pageSize, page);
     }
 
     private interface NewsApi {
 
+        // null parameters are not added to the request
         @GET(API_ROUTE_EVERYTHING)
         Single<ArticlesResponse> fetchEverything(
                 @Query(PARAM_Q) String query,
-                @Query(PARAM_EVERYTHING_LANGUAGE) String language
+                @Query(PARAM_EVERYTHING_LANGUAGE) String language,
+                @Query(PARAM_EVERYTHING_SORT_BY) String sortBy,
+                @Query(PARAM_PAGE_SIZE) Integer pageSize,
+                @Query(PARAM_PAGE) Integer page
         );
 
         @GET(API_ROUTE_HEADLINES)
         Single<ArticlesResponse> fetchTopHeadlines(
-                @Query(PARAM_Q) String query,
-                @Query(PARAM_HEADLINES_CATEGORY) String category,
-                @Query(PARAM_HEADLINES_COUNTRY) String country
-        );
-
-        @GET(API_ROUTE_HEADLINES)
-        Single<ArticlesResponse> fetchPagedTopHeadlines(
-                @Query(PARAM_Q) String query,
-                @Query(PARAM_HEADLINES_CATEGORY) String category,
                 @Query(PARAM_HEADLINES_COUNTRY) String country,
+                @Query(PARAM_HEADLINES_CATEGORY) String category,
+                @Query(PARAM_PAGE_SIZE) Integer pageSize,
                 @Query(PARAM_PAGE) Integer page
         );
 
