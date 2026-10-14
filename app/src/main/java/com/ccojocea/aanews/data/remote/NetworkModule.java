@@ -26,7 +26,6 @@ public class NetworkModule {
     private static final int TIMEOUT = 30; //seconds
 
     private static final String HEADER_X_API_KEY = "X-Api-Key";
-    private static final String NEWS_API_KEY = "3ea4cb83232b4f30aa1c4c5b7c4535c9";
     private static final String NEWS_API_BASE_URL = "https://newsapi.org/v2/";
 
     @Provides
@@ -53,7 +52,7 @@ public class NetworkModule {
 
             // Add an interceptor for reused headers
             builder.addInterceptor(chain -> {
-                Request request = chain.request().newBuilder().addHeader(HEADER_X_API_KEY, NEWS_API_KEY).build();
+                Request request = chain.request().newBuilder().addHeader(HEADER_X_API_KEY, BuildConfig.NEWS_API_KEY).build();
                 return chain.proceed(request);
             });
 
