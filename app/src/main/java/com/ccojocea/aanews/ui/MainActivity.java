@@ -34,7 +34,7 @@ public class MainActivity extends BaseActivity {
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        applySystemBarInsets(binding.getRoot(), binding.toolbar, binding.tabLayout);
+        applySystemBarInsets(binding.getRoot(), binding.appBar, binding.tabLayout);
         setSupportActionBar(binding.toolbar);
 
         sharedViewModel = new ViewModelProvider(this).get(SharedViewModel.class);

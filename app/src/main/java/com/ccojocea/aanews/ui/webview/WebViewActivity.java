@@ -60,7 +60,7 @@ public class WebViewActivity extends BaseActivity {
 
         binding = ActivityWebviewBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        applySystemBarInsets(binding.getRoot(), binding.toolbar, binding.getRoot());
+        applySystemBarInsets(binding.getRoot(), binding.appBar, binding.getRoot());
 
         viewModel = new ViewModelProvider(this).get(WebViewModel.class);
 

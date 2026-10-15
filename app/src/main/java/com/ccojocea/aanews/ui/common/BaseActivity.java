@@ -63,22 +63,19 @@ public abstract class BaseActivity extends AppCompatActivity {
     public abstract View getRoot();
 
     /**
-     * Keeps the content out of the system bars: the top view (usually the toolbar) is padded below the status bar,
+     * Keeps the content out of the system bars: the top view (the toolbar container) is padded below the status bar,
      * the bottom view is padded above the navigation bar and the root is padded horizontally (landscape, cutouts).
      */
     protected void applySystemBarInsets(@NonNull View root, @Nullable View topView, @Nullable View bottomView) {
         final int rootLeft = root.getPaddingLeft();
         final int rootRight = root.getPaddingRight();
         final int topViewTop = topView != null ? topView.getPaddingTop() : 0;
-        final int topViewMinHeight = topView != null ? topView.getMinimumHeight() : 0;
         final int bottomViewBottom = bottomView != null ? bottomView.getPaddingBottom() : 0;
 
         ViewCompat.setOnApplyWindowInsetsListener(root, (v, windowInsets) -> {
             Insets insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout());
             v.setPadding(rootLeft + insets.left, v.getPaddingTop(), rootRight + insets.right, v.getPaddingBottom());
             if (topView != null) {
-                // grow by the same amount, otherwise the padding is taken from the toolbar content
-                topView.setMinimumHeight(topViewMinHeight + insets.top);
                 topView.setPadding(topView.getPaddingLeft(), topViewTop + insets.top, topView.getPaddingRight(), topView.getPaddingBottom());
             }
             if (bottomView != null) {

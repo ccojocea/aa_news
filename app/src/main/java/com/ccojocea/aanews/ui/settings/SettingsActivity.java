@@ -36,7 +36,7 @@ public class SettingsActivity extends BaseActivity {
 
         binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        applySystemBarInsets(binding.getRoot(), binding.toolbar, binding.getRoot());
+        applySystemBarInsets(binding.getRoot(), binding.appBar, binding.getRoot());
 
         setSupportActionBar(binding.toolbar);
         setTitle(R.string.settings_title);
