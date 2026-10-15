@@ -1,6 +1,7 @@
 package com.ccojocea.aanews.ui.common;
 
 import android.content.Context;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,6 +16,10 @@ import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.ccojocea.aanews.R;
 import com.ccojocea.aanews.common.TimeUtil;
 import com.ccojocea.aanews.common.Utils;
@@ -25,6 +30,8 @@ import com.ccojocea.aanews.ui.webview.WebViewActivity;
 
 import java.util.List;
 import java.util.Objects;
+
+import timber.log.Timber;
 
 import static androidx.recyclerview.widget.RecyclerView.NO_POSITION;
 
@@ -211,6 +218,7 @@ public class SharedRecyclerViewAdapter extends ListAdapter<ArticleEntity, Shared
                 Glide.with(getRoot())
                         .load(article.getUrlToImage())
                         .error(R.drawable.placeholder)
+                        .listener(IMAGE_ERROR_LOGGER)
                         .into(getArticleImage());
             } else {
                 Glide.with(getRoot())
@@ -332,6 +340,22 @@ public class SharedRecyclerViewAdapter extends ListAdapter<ArticleEntity, Shared
         }
 
     }
+
+    // the placeholder is shown when an image fails, this tells why (in debug builds, see App)
+    private static final RequestListener<Drawable> IMAGE_ERROR_LOGGER = new RequestListener<Drawable>() {
+
+        @Override
+        public boolean onLoadFailed(@Nullable GlideException e, Object model, @NonNull Target<Drawable> target, boolean isFirstResource) {
+            Timber.w(e, "Could not load image %s", model);
+            return false;
+        }
+
+        @Override
+        public boolean onResourceReady(@NonNull Drawable resource, @NonNull Object model, Target<Drawable> target, @NonNull DataSource dataSource, boolean isFirstResource) {
+            return false;
+        }
+
+    };
 
     private static boolean isSameContentIgnoringSaved(@NonNull ArticleEntity oldArticle, @NonNull ArticleEntity newArticle) {
         return oldArticle.getTitle().equals(newArticle.getTitle())
