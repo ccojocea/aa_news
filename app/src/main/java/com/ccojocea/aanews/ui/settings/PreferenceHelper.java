@@ -37,6 +37,7 @@ import timber.log.Timber;
 public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceChangeListener {
 
     private static final String KEY_HEADLINES_CATEGORY = "key_headlines_category";
+    private static final String KEY_HEADLINES_ABOUT_COUNTRY = "key_headlines_about_country";
     private static final String KEY_SEARCH_SORT_BY = "key_search_sort_by";
     private static final String KEY_MY_NEWS_TOPICS = "key_my_news_topics";
 
@@ -107,6 +108,17 @@ public class PreferenceHelper implements SharedPreferences.OnSharedPreferenceCha
 
     public void setHeadlinesCategory(@NonNull NewsCategory category) {
         preferences.edit().putString(KEY_HEADLINES_CATEGORY, category.getValue()).apply();
+    }
+
+    /**
+     * True when the headlines tab shows news about the country instead of its top headlines.
+     */
+    public boolean isHeadlinesAboutCountry() {
+        return preferences.getBoolean(KEY_HEADLINES_ABOUT_COUNTRY, false);
+    }
+
+    public void setHeadlinesAboutCountry(boolean aboutCountry) {
+        preferences.edit().putBoolean(KEY_HEADLINES_ABOUT_COUNTRY, aboutCountry).apply();
     }
 
     /* My News and search */

@@ -6,9 +6,10 @@ MVVM, rxJava, retrofit, room and https://newsapi.org/
 
 ## Features
 
-- **My News**: the latest articles about the topics you follow (add or remove them with the chips at the top).
-  Results are cached, so the last ones are available offline.
-- **Headlines**: top headlines for a country (Settings, defaults to the device country) and a category.
+- **My News**: the latest articles with the topics you follow in their title (add or remove them with the chips
+  at the top). Results are cached, so the last ones are available offline.
+- **Headlines**: top headlines for a country (Settings, defaults to the device country) and a category, or
+  "About &lt;country&gt;": the latest articles about the country in the language picked in Settings.
 - **Bookmarks**: saved articles, stored locally. Removing one can be undone from the snackbar.
 - **Search**: search all articles, sorted by date, relevance or popularity.
 - Infinite scroll for headlines and search results.
@@ -41,4 +42,5 @@ Requirements: JDK 17+, Android SDK 36. The build uses Gradle 8.14 and Android Gr
 
 - The free NewsAPI (Developer) plan returns at most 100 results per query, allows 100 requests per day and
   is meant for development only.
-- NewsAPI doesn't have top headlines for every country; if a country shows nothing, pick another one in Settings.
+- NewsAPI doesn't have proper top headlines for every country: some return nothing, some only Google News links
+  without images or descriptions, always in the language of the country. "About &lt;country&gt;" works for all of them.

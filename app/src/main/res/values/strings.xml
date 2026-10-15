@@ -19,6 +19,8 @@
     <string name="tab_headlines">Headlines</string>
     <string name="title_headlines">Local Headlines</string>
     <string name="headlines_empty">No headlines found for %1$s in this category.\nNewsAPI doesn\'t have headlines for every country, you can pick another one in the settings.</string>
+    <string name="headlines_about_country">About %1$s</string>
+    <string name="headlines_about_country_empty">No recent news about %1$s in this language.\nYou can pick another language in the settings.</string>
     <string name="category_all">All</string>
     <string name="category_business">Business</string>
     <string name="category_entertainment">Entertainment</string>
@@ -76,7 +78,7 @@
     <!-- SETTINGS FRAGMENT - NEWS -->
     <string name="settings_news_category">News</string>
     <string name="settings_country_title">Headlines country</string>
-    <string name="settings_language_title">Language of My News and Search</string>
+    <string name="settings_language_title">News language (My News, Search, About country)</string>
     <string name="settings_language_all">All languages</string>
 
     <!--  WEBVIEW  -->
