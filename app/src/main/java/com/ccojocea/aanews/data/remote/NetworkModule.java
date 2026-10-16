@@ -77,7 +77,9 @@ public class NetworkModule {
 
         if (BuildConfig.DEBUG) {
             // Prepare a logging interceptor to make sure the requests / responses are shown in logs
-            builder.addInterceptor(loggingInterceptor(HttpLoggingInterceptor.Level.BODY));
+            HttpLoggingInterceptor loggingInterceptor = loggingInterceptor(HttpLoggingInterceptor.Level.BODY);
+            loggingInterceptor.redactHeader(HEADER_X_API_KEY);
+            builder.addInterceptor(loggingInterceptor);
 
             //Setup proxy for Charles
             //builder.proxy(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("192.168.1.100", 8888)));

@@ -30,7 +30,9 @@ public class CustomGlideModule extends AppGlideModule {
     public void registerComponents(@NonNull Context context, @NonNull Glide glide, @NonNull Registry registry) {
         App.getAppComponent().inject(this);
         OkHttpUrlLoader.Factory factory = new OkHttpUrlLoader.Factory(client);
-        glide.getRegistry().replace(GlideUrl.class, InputStream.class, factory);
+        // use the registry passed in: since Glide 4.14 glide.getRegistry() is built lazily from the modules,
+        // calling it here recurses and every image load fails with "Recursive Registry initialization"
+        registry.replace(GlideUrl.class, InputStream.class, factory);
     }
 
 }
