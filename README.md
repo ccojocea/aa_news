@@ -19,11 +19,7 @@ MVVM, rxJava, retrofit, room and https://newsapi.org/
 ## Setup
 
 1. Get a free API key at https://newsapi.org/register
-2. Add it to `local.properties` in the project root (this file is not committed):
-
-   ```properties
-   newsApiKey=your_key_here
-   ```
+2. Add it to `local.properties` in the project root (this file is not committed)
 
    The key can also be passed in the `NEWS_API_KEY` environment variable, e.g. on CI.
 3. Open the project in Android Studio and run the `app` configuration.
