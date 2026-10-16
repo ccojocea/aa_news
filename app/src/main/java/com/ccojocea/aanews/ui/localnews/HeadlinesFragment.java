@@ -21,9 +21,12 @@ import com.google.android.material.chip.Chip;
 
 public class HeadlinesFragment extends BaseFragment {
 
+    private static final String ABOUT_COUNTRY_TAG = "about_country";
+
     private FragmentHeadlinesBinding binding;
     private HeadlinesViewModel viewModel;
     private SharedRecyclerViewAdapter adapter;
+    private Chip aboutCountryChip;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -55,16 +58,19 @@ public class HeadlinesFragment extends BaseFragment {
     }
 
     private void setupCategories() {
-        LayoutInflater inflater = getLayoutInflater();
+        // first chip: news about the country, the others: top headlines by category
+        aboutCountryChip = createChip(ABOUT_COUNTRY_TAG);
+        aboutCountryChip.setText(getString(R.string.headlines_about_country, viewModel.getCountry().getDisplayName()));
+        binding.categoryChips.addView(aboutCountryChip);
+        if (viewModel.isAboutCountry()) {
+            aboutCountryChip.setChecked(true);
+        }
+
         for (NewsCategory category : NewsCategory.values()) {
-            Chip chip = (Chip) inflater.inflate(R.layout.layout_filter_chip, binding.categoryChips, false);
-            // chips are created again with new ids together with the view, their state must not be restored
-            chip.setId(View.generateViewId());
-            chip.setSaveEnabled(false);
+            Chip chip = createChip(category);
             chip.setText(getCategoryName(category));
-            chip.setTag(category);
             binding.categoryChips.addView(chip);
-            if (category == viewModel.getCategory()) {
+            if (!viewModel.isAboutCountry() && category == viewModel.getCategory()) {
                 chip.setChecked(true);
             }
         }
@@ -73,11 +79,26 @@ public class HeadlinesFragment extends BaseFragment {
                 return;
             }
             Chip checked = group.findViewById(checkedIds.get(0));
-            if (checked != null && checked.getTag() instanceof NewsCategory) {
-                binding.recyclerView.scrollToPosition(0);
+            if (checked == null) {
+                return;
+            }
+            binding.recyclerView.scrollToPosition(0);
+            if (checked.getTag() instanceof NewsCategory) {
                 viewModel.setCategory((NewsCategory) checked.getTag());
+            } else if (ABOUT_COUNTRY_TAG.equals(checked.getTag())) {
+                viewModel.showAboutCountry();
             }
         });
+    }
+
+    @NonNull
+    private Chip createChip(@NonNull Object tag) {
+        Chip chip = (Chip) getLayoutInflater().inflate(R.layout.layout_filter_chip, binding.categoryChips, false);
+        // chips are created again with new ids together with the view, their state must not be restored
+        chip.setId(View.generateViewId());
+        chip.setSaveEnabled(false);
+        chip.setTag(tag);
+        return chip;
     }
 
     @StringRes
@@ -110,9 +131,15 @@ public class HeadlinesFragment extends BaseFragment {
             binding.recyclerView.setVisibility(isEmpty ? View.GONE : View.VISIBLE);
             binding.emptyView.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
             if (isEmpty) {
-                binding.emptyText.setText(getString(R.string.headlines_empty, viewModel.getCountry().getDisplayName()));
+                String country = viewModel.getCountry().getDisplayName();
+                binding.emptyText.setText(viewModel.isAboutCountry()
+                        ? getString(R.string.headlines_about_country_empty, country)
+                        : getString(R.string.headlines_empty, country));
             }
         });
+
+        viewModel.getCountryLiveData().observe(getViewLifecycleOwner(), country ->
+                aboutCountryChip.setText(getString(R.string.headlines_about_country, country.getDisplayName())));
 
         viewModel.getLoadingLiveData().observe(getViewLifecycleOwner(), isLoading -> binding.refreshLayout.setRefreshing(isLoading));
 

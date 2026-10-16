@@ -6,6 +6,7 @@ import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class NewsEnumsTest {
 
@@ -27,6 +28,12 @@ public class NewsEnumsTest {
         assertEquals(NewsCountry.RO, NewsCountry.fromLocale(new Locale("ro", "RO")));
         assertEquals(NewsCountry.DEFAULT, NewsCountry.fromLocale(new Locale("es", "ES")));
         assertEquals(NewsCountry.DEFAULT, NewsCountry.fromLocale(new Locale("en")));
+    }
+
+    @Test
+    public void country_searchNames_includeEnglishName() {
+        assertTrue(NewsCountry.RO.getSearchNames().contains("Romania"));
+        assertTrue(NewsCountry.US.getSearchNames().contains("United States"));
     }
 
     @Test

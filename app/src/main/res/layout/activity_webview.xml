@@ -5,20 +5,27 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+    <!-- gets the status bar inset as padding, so the toolbar keeps its normal height -->
+    <FrameLayout
+        android:id="@+id/app_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
-        android:background="?attr/colorPrimaryDark"
-        android:theme="@style/AppActionBar"
-        app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight" />
+        android:background="?attr/colorPrimaryDark">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:theme="@style/AppActionBar"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight" />
+
+    </FrameLayout>
 
     <FrameLayout
         android:id="@+id/loading_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/toolbar"
+        android:layout_below="@id/app_bar"
         android:background="@color/primaryDarkColor">
 
         <ProgressBar
@@ -42,7 +49,7 @@
     <!--        android:id="@+id/blocking_view"-->
     <!--        android:layout_width="match_parent"-->
     <!--        android:layout_height="match_parent"-->
-    <!--        android:layout_below="@id/toolbar"-->
+    <!--        android:layout_below="@id/app_bar"-->
     <!--        android:background="@color/blocking_view"-->
     <!--        android:clickable="true"-->
     <!--        android:elevation="5dp"-->

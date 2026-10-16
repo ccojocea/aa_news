@@ -34,6 +34,10 @@ public class NewsWebService {
 
     private static final String PARAM_EVERYTHING_LANGUAGE = "language";
     private static final String PARAM_EVERYTHING_SORT_BY = "sortBy"; //relevancy, popularity, publishedAt(default)
+    private static final String PARAM_EVERYTHING_SEARCH_IN = "searchIn"; //title, description, content (default: all)
+
+    // only match articles that have the query in their title, the other fields often just mention it in passing
+    public static final String SEARCH_IN_TITLE = "title";
 
     private final NewsApi newsApi;
 
@@ -56,10 +60,12 @@ public class NewsWebService {
      * @param query    keywords or phrases, supports AND / OR / NOT and quotes for exact matches
      * @param language null for all languages, see NewsLanguage
      * @param sortBy   null for the default (publishedAt), see NewsSortBy
+     * @param searchIn null to search all fields, e.g. {@link #SEARCH_IN_TITLE}
      * @param page     1-based page index
      */
-    public Single<ArticlesResponse> fetchEverything(@NonNull String query, @Nullable String language, @Nullable String sortBy, int page, int pageSize) {
-        return newsApi.fetchEverything(query, language, sortBy, pageSize, page);
+    public Single<ArticlesResponse> fetchEverything(@NonNull String query, @Nullable String language, @Nullable String sortBy,
+                                                    @Nullable String searchIn, int page, int pageSize) {
+        return newsApi.fetchEverything(query, language, sortBy, searchIn, pageSize, page);
     }
 
     private interface NewsApi {
@@ -70,6 +76,7 @@ public class NewsWebService {
                 @Query(PARAM_Q) String query,
                 @Query(PARAM_EVERYTHING_LANGUAGE) String language,
                 @Query(PARAM_EVERYTHING_SORT_BY) String sortBy,
+                @Query(PARAM_EVERYTHING_SEARCH_IN) String searchIn,
                 @Query(PARAM_PAGE_SIZE) Integer pageSize,
                 @Query(PARAM_PAGE) Integer page
         );

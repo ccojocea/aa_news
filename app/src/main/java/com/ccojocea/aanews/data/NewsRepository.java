@@ -87,7 +87,20 @@ public class NewsRepository {
      * @param page 1-based page index
      */
     public Single<ArticlePage> searchArticles(@NonNull String query, @NonNull NewsLanguage language, @NonNull NewsSortBy sortBy, int page) {
-        return newsWebService.fetchEverything(query, language.getValue(), sortBy.getValue(), page, NewsWebService.PAGE_SIZE)
+        return newsWebService.fetchEverything(query, language.getValue(), sortBy.getValue(), null, page, NewsWebService.PAGE_SIZE)
+                .map(NewsRepository::toArticlePage)
+                .subscribeOn(Schedulers.io());
+    }
+
+    /**
+     * The newest articles with the country in their title, in the given language.
+     * Top headlines are not available (or only as Google News links) for many countries, this works for all of them.
+     *
+     * @param page 1-based page index
+     */
+    public Single<ArticlePage> getNewsAboutCountry(@NonNull NewsCountry country, @NonNull NewsLanguage language, int page) {
+        return newsWebService.fetchEverything(Topics.buildQuery(country.getSearchNames()), language.getValue(),
+                        NewsSortBy.PUBLISHED_AT.getValue(), NewsWebService.SEARCH_IN_TITLE, page, NewsWebService.PAGE_SIZE)
                 .map(NewsRepository::toArticlePage)
                 .subscribeOn(Schedulers.io());
     }
@@ -110,7 +123,8 @@ public class NewsRepository {
             return Completable.fromAction(() -> database.articleDao().deleteArticles())
                     .subscribeOn(Schedulers.io());
         }
-        return newsWebService.fetchEverything(Topics.buildQuery(topics), language.getValue(), NewsSortBy.PUBLISHED_AT.getValue(), 1, MY_NEWS_PAGE_SIZE)
+        return newsWebService.fetchEverything(Topics.buildQuery(topics), language.getValue(), NewsSortBy.PUBLISHED_AT.getValue(),
+                        NewsWebService.SEARCH_IN_TITLE, 1, MY_NEWS_PAGE_SIZE)
                 .map(NewsRepository::toArticles)
                 .flatMapCompletable(articles -> Completable.fromAction(() -> database.articleDao().replaceArticles(articles)))
                 .subscribeOn(Schedulers.io());
@@ -125,7 +139,7 @@ public class NewsRepository {
         }
         // the saved state is not known here, it is matched against the bookmarks by the view models
         return response.articles.stream()
-                .filter(articleDto -> articleDto != null && articleDto.url != null)
+                .filter(articleDto -> articleDto != null && !articleDto.isRemoved())
                 .map(articleDto -> articleDto.toArticleEntity(false))
                 .collect(Collectors.toList());
     }

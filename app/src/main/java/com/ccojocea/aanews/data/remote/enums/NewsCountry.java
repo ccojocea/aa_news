@@ -3,6 +3,8 @@ package com.ccojocea.aanews.data.remote.enums;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -80,6 +82,22 @@ public enum NewsCountry {
     @NonNull
     public String getDisplayName() {
         return new Locale("", name()).getDisplayCountry();
+    }
+
+    /**
+     * Names to search for when looking for news about the country: the English name and the name in the user's
+     * language, e.g. [Romania, România] on a Romanian device.
+     */
+    @NonNull
+    public List<String> getSearchNames() {
+        List<String> names = new ArrayList<>();
+        Locale country = new Locale("", name());
+        for (String displayName : new String[]{country.getDisplayCountry(Locale.ENGLISH), country.getDisplayCountry()}) {
+            if (!displayName.isEmpty() && !names.contains(displayName)) {
+                names.add(displayName);
+            }
+        }
+        return names;
     }
 
     @Nullable
