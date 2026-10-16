@@ -1,6 +1,9 @@
 package com.ccojocea.aanews.data.remote;
 
+import android.webkit.WebSettings;
+
 import com.ccojocea.aanews.BuildConfig;
+import com.ccojocea.aanews.common.App;
 
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +26,14 @@ import timber.log.Timber;
 public class NetworkModule {
 
     public static final String NEWS_API = "newsApi";
+    public static final String IMAGES = "images";
+
+    // image CDNs of many news sites refuse requests that don't come from a browser (e.g. "okhttp/4.12.0")
+    private static final String HEADER_USER_AGENT = "User-Agent";
+    private static final String HEADER_ACCEPT = "Accept";
+    private static final String ACCEPT_IMAGES = "image/webp,image/apng,image/*,*/*;q=0.8";
+
+    private static volatile String userAgent;
 
     private static final int TIMEOUT = 30; //seconds
 
@@ -75,18 +86,38 @@ public class NetworkModule {
     }
 
     /**
-     * Client for everything else, e.g. Glide loading the article images from many different hosts.
+     * Client for Glide, loading the article images from many different hosts.
      * It must not send the API key, and logging image bodies would only waste memory.
      */
     @Provides
     @Singleton
-    OkHttpClient okHttpClient() {
-        Timber.d("Dagger debug - okHttpClient()");
+    @Named(IMAGES)
+    OkHttpClient imagesClient() {
+        Timber.d("Dagger debug - imagesClient()");
         OkHttpClient.Builder builder = baseBuilder();
+        // identify as the WebView that shows the same articles, the default okhttp user agent is often blocked
+        builder.addInterceptor(chain -> chain.proceed(chain.request().newBuilder()
+                .header(HEADER_USER_AGENT, getUserAgent())
+                .header(HEADER_ACCEPT, ACCEPT_IMAGES)
+                .build()));
         if (BuildConfig.DEBUG) {
             builder.addInterceptor(loggingInterceptor(HttpLoggingInterceptor.Level.BASIC));
         }
         return builder.build();
+    }
+
+    private static String getUserAgent() {
+        if (userAgent == null) {
+            try {
+                userAgent = WebSettings.getDefaultUserAgent(App.getApp());
+            } catch (RuntimeException e) {
+                // no WebView available (e.g. it is being updated)
+                Timber.w(e, "Could not read the WebView user agent");
+                String systemAgent = System.getProperty("http.agent");
+                userAgent = systemAgent != null ? systemAgent : "Mozilla/5.0 (Linux; Android)";
+            }
+        }
+        return userAgent;
     }
 
     private static OkHttpClient.Builder baseBuilder() {
