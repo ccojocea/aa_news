@@ -1,12 +1,12 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+# Android Studio rewrites most of .idea per machine (JDK, Gradle JVM, run configurations...),
+# only the shared code style, VCS mapping and dictionary are kept in git
+/.idea/*
+!/.idea/codeStyles/
+!/.idea/dictionaries/
+!/.idea/vcs.xml
 .DS_Store
 /build
 /captures
