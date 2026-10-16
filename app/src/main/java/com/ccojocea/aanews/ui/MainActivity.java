@@ -94,7 +94,9 @@ public class MainActivity extends BaseActivity {
                     break;
             }
         });
-        binding.tabLayout.setTabMode(TabLayout.MODE_AUTO);
+        // fixed: the tabs always share the width; in auto mode the row turned scrollable when the labels were a bit
+        // too wide and shifted to center the last tabs when they were selected
+        binding.tabLayout.setTabMode(TabLayout.MODE_FIXED);
         binding.tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
         tabLayoutMediator.attach();
 
